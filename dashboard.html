@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard · Slam Diego</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --sand: #f5f0e8;
+    --navy: #002D62;
+    --gold: #FFC425;
+    --brown: #7B3F00;
+    --text: #1a1a1a;
+    --muted: #888;
+    --card-bg: #fff;
+  }
+
+  html, body {
+    min-height: 100%;
+    background: var(--sand);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 100;
+    opacity: 0.4;
+  }
+
+  /* LOGIN */
+  .login-wrap {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+  }
+
+  .login-box {
+    background: var(--card-bg);
+    border: 1px solid #e0dbd0;
+    border-radius: 4px;
+    padding: 40px;
+    width: 320px;
+    text-align: center;
+    box-shadow: 0 4px 40px rgba(0,45,98,0.07);
+  }
+
+  .login-box .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 4px;
+  }
+  .login-box .logo em { font-style: italic; color: var(--gold); -webkit-text-stroke: 0.5px var(--brown); }
+  .login-box .sub { font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 28px; }
+
+  .login-box input {
+    width: 100%;
+    background: var(--sand);
+    border: 1px solid #d0c9bb;
+    border-radius: 3px;
+    padding: 10px 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--text);
+    text-align: center;
+    letter-spacing: 0.1em;
+    margin-bottom: 12px;
+  }
+  .login-box input:focus { outline: none; border-color: var(--navy); }
+
+  .login-box button {
+    width: 100%;
+    background: var(--navy);
+    color: #fff;
+    border: none;
+    border-radius: 3px;
+    padding: 10px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .login-box button:hover { background: #003d8a; }
+  .login-err { font-size: 0.68rem; color: #c0392b; margin-top: 10px; min-height: 16px; }
+
+  /* DASHBOARD */
+  .dash-wrap {
+    display: none;
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 60px 24px 80px;
+  }
+
+  .dash-header {
+    margin-bottom: 48px;
+    position: relative;
+  }
+
+  .dash-header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--navy) 0%, var(--gold) 50%, var(--navy) 100%);
+    margin-bottom: 28px;
+  }
+
+  .dash-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--navy);
+    letter-spacing: -0.02em;
+    padding-top: 20px;
+    display: block;
+  }
+  .dash-logo em { font-style: italic; color: var(--gold); -webkit-text-stroke: 0.5px var(--brown); }
+  .dash-subtitle {
+    font-size: 0.62rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 4px;
+    display: block;
+  }
+
+  .section-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e0dbd0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; }
+
+  .card-grid {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 40px;
+  }
+
+  .site-card {
+    background: var(--card-bg);
+    border: 1px solid #e0dbd0;
+    border-radius: 4px;
+    padding: 18px 22px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    text-decoration: none;
+    color: var(--text);
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+    box-shadow: 0 1px 8px rgba(0,45,98,0.04);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .site-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: var(--navy);
+    transform: scaleY(0);
+    transition: transform 0.2s;
+    transform-origin: bottom;
+  }
+
+  .site-card:hover {
+    border-color: var(--navy);
+    box-shadow: 0 4px 20px rgba(0,45,98,0.1);
+    transform: translateY(-1px);
+  }
+  .site-card:hover::before { transform: scaleY(1); }
+
+  .card-icon {
+    font-size: 1.6rem;
+    flex-shrink: 0;
+    width: 40px;
+    text-align: center;
+    line-height: 1;
+  }
+
+  .card-body { flex: 1; min-width: 0; }
+
+  .card-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 3px;
+    display: block;
+  }
+
+  .card-desc {
+    font-size: 0.68rem;
+    color: var(--muted);
+    line-height: 1.5;
+    display: block;
+  }
+
+  .card-url {
+    font-size: 0.58rem;
+    color: #bbb;
+    letter-spacing: 0.05em;
+    margin-top: 4px;
+    display: block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .card-arrow {
+    font-size: 1rem;
+    color: #ccc;
+    flex-shrink: 0;
+    transition: transform 0.2s, color 0.2s;
+  }
+  .site-card:hover .card-arrow { transform: translateX(3px); color: var(--navy); }
+
+  .dash-footer {
+    margin-top: 48px;
+    padding-top: 16px;
+    border-top: 1px solid #e0dbd0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .footer-home {
+    font-size: 0.62rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .footer-home:hover { color: var(--navy); }
+
+  .footer-lock {
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #ccc;
+    cursor: pointer;
+    background: none;
+    border: none;
+    font-family: 'DM Mono', monospace;
+    transition: color 0.2s;
+  }
+  .footer-lock:hover { color: var(--muted); }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .dash-wrap.visible { display: block; animation: fadeIn 0.6s ease forwards; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="login-wrap">
+  <div class="login-box">
+    <div class="logo">Slam <em>Diego</em></div>
+    <div class="sub">Private Dashboard</div>
+    <input type="password" id="pw-input" placeholder="password" autocomplete="current-password">
+    <button onclick="checkPw()">Enter</button>
+    <div class="login-err" id="pw-err"></div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div class="dash-wrap" id="dash-wrap">
+  <div class="dash-header">
+    <span class="dash-logo">Slam <em>Diego</em></span>
+    <span class="dash-subtitle">Personal Dashboard · For Josh's eyes only</span>
+  </div>
+
+  <div class="section-label">Tools</div>
+  <div class="card-grid">
+    <a class="site-card" href="https://oornoto.github.io/hof-workspace" target="_blank">
+      <div class="card-icon">⚾</div>
+      <div class="card-body">
+        <span class="card-name">HOF Card Assignment</span>
+        <span class="card-desc">Decision workspace for building the optimal one-card-per-set assignment of Hall of Fame rookie cards.</span>
+        <span class="card-url">oornoto.github.io/hof-workspace</span>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+
+    <a class="site-card" href="https://oornoto.github.io/HOF_rookie_cards" target="_blank">
+      <div class="card-icon">📊</div>
+      <div class="card-body">
+        <span class="card-name">HOF Set Ranker</span>
+        <span class="card-desc">Interactive scorer that ranks 742 card sets by Hall of Fame rookie card quality using configurable WAR formulas and tier weights.</span>
+        <span class="card-url">oornoto.github.io/HOF_rookie_cards</span>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+  </div>
+
+  <div class="section-label">Sites</div>
+  <div class="card-grid">
+    <a class="site-card" href="https://slamdiego.com" target="_blank">
+      <div class="card-icon">🏟️</div>
+      <div class="card-body">
+        <span class="card-name">Slam Diego</span>
+        <span class="card-desc">Public Padres fan page with daily stat-driven facts pulled live. The site you're on.</span>
+        <span class="card-url">slamdiego.com</span>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+
+    <a class="site-card" href="https://slamdiego.vercel.app" target="_blank">
+      <div class="card-icon">🃏</div>
+      <div class="card-body">
+        <span class="card-name">Card Gallery</span>
+        <span class="card-desc">Personal baseball card collection gallery. Moving to cards.slamdiego.com.</span>
+        <span class="card-url">slamdiego.vercel.app → cards.slamdiego.com</span>
+      </div>
+      <div class="card-arrow">→</div>
+    </a>
+  </div>
+
+  <div class="dash-footer">
+    <a class="footer-home" href="/">← slamdiego.com</a>
+    <button class="footer-lock" onclick="lock()">lock</button>
+  </div>
+</div>
+
+<script>
+const PASSWORD = 'gwynn';
+const SESSION_KEY = 'sd_dashboard_auth';
+
+function checkPw() {
+  const val = document.getElementById('pw-input').value;
+  if (val === PASSWORD) {
+    sessionStorage.setItem(SESSION_KEY, '1');
+    showDash();
+  } else {
+    document.getElementById('pw-err').textContent = 'Incorrect.';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-input').focus();
+  }
+}
+
+function showDash() {
+  document.getElementById('login-wrap').style.display = 'none';
+  const dash = document.getElementById('dash-wrap');
+  dash.classList.add('visible');
+}
+
+function lock() {
+  sessionStorage.removeItem(SESSION_KEY);
+  location.reload();
+}
+
+document.getElementById('pw-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') checkPw();
+});
+
+// Auto-unlock if already authed this session
+if (sessionStorage.getItem(SESSION_KEY) === '1') showDash();
+</script>
+</body>
+</html>
