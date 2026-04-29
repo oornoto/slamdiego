@@ -5,275 +5,117 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard · Slam Diego</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --sand: #f5f0e8; --navy: #002D62; --gold: #FFC425; --brown: #7B3F00;
+  --text: #1a1a1a; --muted: #888; --border: #e0dbd0; --card-bg: #fff;
+}
+html, body { min-height: 100%; background: var(--sand); color: var(--text); font-family: 'DM Mono', monospace; }
 
-  :root {
-    --sand: #f5f0e8;
-    --navy: #002D62;
-    --gold: #FFC425;
-    --brown: #7B3F00;
-    --text: #1a1a1a;
-    --muted: #888;
-    --card-bg: #fff;
-  }
+/* LOGIN */
+.login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 40px 24px; }
+.login-box { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 40px; width: 340px; text-align: center; box-shadow: 0 4px 40px rgba(0,45,98,0.07); }
+.login-logo { font-family: 'Playfair Display', serif; font-size: 1.5rem; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+.login-logo em { font-style: italic; color: var(--gold); -webkit-text-stroke: 0.5px var(--brown); }
+.login-sub { font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 28px; }
+.login-field { margin-bottom: 14px; text-align: left; }
+.login-field label { display: block; font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+.login-field input { width: 100%; background: var(--sand); border: 1px solid var(--border); border-radius: 4px; padding: 10px 12px; font-family: 'DM Mono', monospace; font-size: 0.85rem; color: var(--text); }
+.login-field input:focus { outline: none; border-color: var(--navy); }
+.login-btn { width: 100%; background: var(--navy); color: #fff; border: none; border-radius: 4px; padding: 10px; font-family: 'DM Mono', monospace; font-size: 0.72rem; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer; transition: background 0.2s; margin-top: 4px; }
+.login-btn:hover { background: #003d8a; }
+.login-btn:disabled { opacity: 0.6; cursor: default; }
+.login-err { font-size: 0.68rem; color: #c0392b; margin-top: 10px; min-height: 16px; }
 
-  html, body {
-    min-height: 100%;
-    background: var(--sand);
-    color: var(--text);
-    font-family: 'DM Mono', monospace;
-  }
+/* DASH */
+.dash { display: none; max-width: 920px; margin: 0 auto; padding: 48px 24px 80px; }
+.dash.visible { display: block; animation: fadeIn 0.5s ease forwards; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
 
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-    pointer-events: none;
-    z-index: 100;
-    opacity: 0.4;
-  }
+.dash-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 40px; padding-bottom: 16px; border-bottom: 2px solid var(--navy); flex-wrap: wrap; gap: 12px; }
+.dash-logo { font-family: 'Playfair Display', serif; font-size: 1.8rem; font-weight: 700; color: var(--navy); letter-spacing: -0.02em; }
+.dash-logo em { font-style: italic; color: var(--gold); -webkit-text-stroke: 0.5px var(--brown); }
+.dash-actions { display: flex; gap: 8px; align-items: center; }
 
-  /* LOGIN */
-  .login-wrap {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 24px;
-  }
+.btn { font-family: 'DM Mono', monospace; font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; padding: 6px 14px; border-radius: 4px; cursor: pointer; transition: all 0.2s; border: 1px solid; }
+.btn-ghost { background: none; border-color: var(--border); color: var(--muted); }
+.btn-ghost:hover { border-color: var(--navy); color: var(--navy); }
+.btn-primary { background: var(--navy); border-color: var(--navy); color: #fff; }
+.btn-primary:hover { background: #003d8a; }
+.btn-sm { padding: 3px 10px; font-size: 0.58rem; }
 
-  .login-box {
-    background: var(--card-bg);
-    border: 1px solid #e0dbd0;
-    border-radius: 4px;
-    padding: 40px;
-    width: 320px;
-    text-align: center;
-    box-shadow: 0 4px 40px rgba(0,45,98,0.07);
-  }
+/* SECTIONS */
+.section { margin-bottom: 36px; }
+.section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; cursor: pointer; user-select: none; }
+.section-name { font-size: 0.65rem; font-weight: 500; letter-spacing: 0.2em; text-transform: uppercase; color: var(--navy); }
+.section-count { font-size: 0.6rem; color: var(--muted); background: var(--border); border-radius: 99px; padding: 1px 8px; }
+.section-rule { flex: 1; height: 1px; background: var(--border); }
+.section-toggle { font-size: 0.7rem; color: var(--muted); transition: transform 0.2s; }
+.section-toggle.collapsed { transform: rotate(-90deg); }
+.section-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 14px; }
+.section-grid.hidden { display: none; }
+.section-footer { margin-top: 10px; }
 
-  .login-box .logo {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--navy);
-    margin-bottom: 4px;
-  }
-  .login-box .logo em { font-style: italic; color: var(--gold); -webkit-text-stroke: 0.5px var(--brown); }
-  .login-box .sub { font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 28px; }
+/* CARDS */
+.card-wrap { perspective: 1000px; height: 190px; }
+.card-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 0.5s cubic-bezier(0.4,0,0.2,1); }
+.card-wrap.flipped .card-inner { transform: rotateY(180deg); }
+.card-face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 6px; border: 1px solid var(--border); background: var(--card-bg); padding: 18px 20px; display: flex; flex-direction: column; box-shadow: 0 1px 8px rgba(0,45,98,0.04); transition: box-shadow 0.2s, border-color 0.2s; }
+.card-face-back { transform: rotateY(180deg); }
+.card-wrap:not(.flipped) .card-face-front:hover { border-color: var(--navy); box-shadow: 0 4px 20px rgba(0,45,98,0.1); }
+.card-name { font-family: 'Playfair Display', serif; font-size: 1rem; font-weight: 700; color: var(--navy); margin-bottom: 5px; }
+.card-desc { font-size: 0.63rem; color: var(--muted); line-height: 1.6; flex: 1; }
+.card-bottom { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; gap: 8px; }
+.card-url { font-size: 0.58rem; color: var(--navy); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.card-url:hover { border-color: var(--navy); }
+.flip-btn { font-size: 0.58rem; background: none; border: 1px solid var(--border); border-radius: 3px; padding: 3px 8px; color: var(--muted); cursor: pointer; font-family: 'DM Mono', monospace; letter-spacing: 0.08em; transition: all 0.2s; flex-shrink: 0; }
+.flip-btn:hover { border-color: var(--navy); color: var(--navy); }
 
-  .login-box input {
-    width: 100%;
-    background: var(--sand);
-    border: 1px solid #d0c9bb;
-    border-radius: 3px;
-    padding: 10px 12px;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.85rem;
-    color: var(--text);
-    text-align: center;
-    letter-spacing: 0.1em;
-    margin-bottom: 12px;
-  }
-  .login-box input:focus { outline: none; border-color: var(--navy); }
+/* CARD BACK */
+.card-back-title { font-size: 0.55rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.services-list { flex: 1; display: flex; flex-direction: column; gap: 6px; overflow-y: auto; }
+.service-item { display: flex; align-items: center; justify-content: space-between; }
+.service-name { font-size: 0.7rem; color: var(--text); }
+.service-link { font-size: 0.58rem; color: var(--navy); text-decoration: none; border-bottom: 1px solid transparent; transition: border-color 0.2s; }
+.service-link:hover { border-color: var(--navy); }
+.card-back-actions { display: flex; align-items: center; justify-content: space-between; margin-top: 10px; }
 
-  .login-box button {
-    width: 100%;
-    background: var(--navy);
-    color: #fff;
-    border: none;
-    border-radius: 3px;
-    padding: 10px;
-    font-family: 'DM Mono', monospace;
-    font-size: 0.72rem;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-  .login-box button:hover { background: #003d8a; }
-  .login-err { font-size: 0.68rem; color: #c0392b; margin-top: 10px; min-height: 16px; }
+/* FORMS */
+.overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; align-items: center; justify-content: center; }
+.overlay.open { display: flex; }
+.form-box { background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px; padding: 32px; width: 480px; max-width: 92vw; max-height: 88vh; overflow-y: auto; box-shadow: 0 8px 40px rgba(0,0,0,0.15); }
+.form-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; color: var(--navy); margin-bottom: 22px; }
+.form-field { margin-bottom: 14px; }
+.form-field label { display: block; font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+.form-field input, .form-field select, .form-field textarea { width: 100%; background: var(--sand); border: 1px solid var(--border); border-radius: 4px; padding: 8px 10px; font-family: 'DM Mono', monospace; font-size: 0.78rem; color: var(--text); }
+.form-field input:focus, .form-field select:focus, .form-field textarea:focus { outline: none; border-color: var(--navy); }
+.form-field textarea { resize: vertical; min-height: 68px; }
+.svc-label { font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 8px; }
+.svc-row { display: flex; gap: 7px; margin-bottom: 7px; align-items: center; }
+.svc-row input { flex: 1; }
+.rm-btn { background: none; border: 1px solid #e0c0c0; border-radius: 3px; color: #c0392b; padding: 4px 8px; font-size: 0.62rem; cursor: pointer; flex-shrink: 0; }
+.add-svc-btn { font-size: 0.62rem; background: none; border: 1px dashed var(--border); border-radius: 4px; padding: 6px 12px; color: var(--muted); cursor: pointer; width: 100%; font-family: 'DM Mono', monospace; transition: all 0.2s; }
+.add-svc-btn:hover { border-color: var(--navy); color: var(--navy); }
+.form-actions { display: flex; gap: 8px; justify-content: space-between; align-items: center; margin-top: 22px; }
+.form-actions-right { display: flex; gap: 8px; }
+.form-err { font-size: 0.68rem; color: #c0392b; margin-top: 8px; min-height: 16px; }
 
-  /* DASHBOARD */
-  .dash-wrap {
-    display: none;
-    max-width: 680px;
-    margin: 0 auto;
-    padding: 60px 24px 80px;
-  }
+/* FOOTER */
+.dash-footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+.footer-link { font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); text-decoration: none; transition: color 0.2s; }
+.footer-link:hover { color: var(--navy); }
 
-  .dash-header {
-    margin-bottom: 48px;
-    position: relative;
-  }
+/* TOAST */
+.toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); padding: 8px 18px; border-radius: 5px; font-size: 0.7rem; font-weight: 500; z-index: 999; pointer-events: none; transition: opacity 0.4s; white-space: nowrap; }
+.toast.success { background: #0f2318; border: 1px solid #16a34a; color: #4ade80; }
+.toast.error { background: #450a0a; border: 1px solid #dc2626; color: #f87171; }
 
-  .dash-header::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, var(--navy) 0%, var(--gold) 50%, var(--navy) 100%);
-    margin-bottom: 28px;
-  }
-
-  .dash-logo {
-    font-family: 'Playfair Display', serif;
-    font-size: 2.2rem;
-    font-weight: 700;
-    color: var(--navy);
-    letter-spacing: -0.02em;
-    padding-top: 20px;
-    display: block;
-  }
-  .dash-logo em { font-style: italic; color: var(--gold); -webkit-text-stroke: 0.5px var(--brown); }
-  .dash-subtitle {
-    font-size: 0.62rem;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-top: 4px;
-    display: block;
-  }
-
-  .section-label {
-    font-size: 0.6rem;
-    letter-spacing: 0.25em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 14px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #e0dbd0;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-  .section-label::after { content: ''; flex: 1; height: 1px; }
-
-  .card-grid {
-    display: grid;
-    gap: 12px;
-    margin-bottom: 40px;
-  }
-
-  .site-card {
-    background: var(--card-bg);
-    border: 1px solid #e0dbd0;
-    border-radius: 4px;
-    padding: 18px 22px;
-    display: flex;
-    align-items: center;
-    gap: 18px;
-    text-decoration: none;
-    color: var(--text);
-    transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
-    box-shadow: 0 1px 8px rgba(0,45,98,0.04);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .site-card::before {
-    content: '';
-    position: absolute;
-    left: 0; top: 0; bottom: 0;
-    width: 3px;
-    background: var(--navy);
-    transform: scaleY(0);
-    transition: transform 0.2s;
-    transform-origin: bottom;
-  }
-
-  .site-card:hover {
-    border-color: var(--navy);
-    box-shadow: 0 4px 20px rgba(0,45,98,0.1);
-    transform: translateY(-1px);
-  }
-  .site-card:hover::before { transform: scaleY(1); }
-
-  .card-icon {
-    font-size: 1.6rem;
-    flex-shrink: 0;
-    width: 40px;
-    text-align: center;
-    line-height: 1;
-  }
-
-  .card-body { flex: 1; min-width: 0; }
-
-  .card-name {
-    font-family: 'Playfair Display', serif;
-    font-size: 1rem;
-    font-weight: 700;
-    color: var(--navy);
-    margin-bottom: 3px;
-    display: block;
-  }
-
-  .card-desc {
-    font-size: 0.68rem;
-    color: var(--muted);
-    line-height: 1.5;
-    display: block;
-  }
-
-  .card-url {
-    font-size: 0.58rem;
-    color: #bbb;
-    letter-spacing: 0.05em;
-    margin-top: 4px;
-    display: block;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .card-arrow {
-    font-size: 1rem;
-    color: #ccc;
-    flex-shrink: 0;
-    transition: transform 0.2s, color 0.2s;
-  }
-  .site-card:hover .card-arrow { transform: translateX(3px); color: var(--navy); }
-
-  .dash-footer {
-    margin-top: 48px;
-    padding-top: 16px;
-    border-top: 1px solid #e0dbd0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .footer-home {
-    font-size: 0.62rem;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    color: var(--muted);
-    text-decoration: none;
-    transition: color 0.2s;
-  }
-  .footer-home:hover { color: var(--navy); }
-
-  .footer-lock {
-    font-size: 0.62rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: #ccc;
-    cursor: pointer;
-    background: none;
-    border: none;
-    font-family: 'DM Mono', monospace;
-    transition: color 0.2s;
-  }
-  .footer-lock:hover { color: var(--muted); }
-
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(12px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  .dash-wrap.visible { display: block; animation: fadeIn 0.6s ease forwards; }
+/* LOADING */
+.loading { display: flex; align-items: center; justify-content: center; min-height: 200px; color: var(--muted); font-size: 0.75rem; gap: 10px; }
+.spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--navy); border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
@@ -281,106 +123,339 @@
 <!-- LOGIN -->
 <div class="login-wrap" id="login-wrap">
   <div class="login-box">
-    <div class="logo">Slam <em>Diego</em></div>
-    <div class="sub">Private Dashboard</div>
-    <input type="password" id="pw-input" placeholder="password" autocomplete="current-password">
-    <button onclick="checkPw()">Enter</button>
-    <div class="login-err" id="pw-err"></div>
+    <div class="login-logo">Slam <em>Diego</em></div>
+    <div class="login-sub">Private Dashboard</div>
+    <div class="login-field"><label>Email</label><input type="email" id="login-email" autocomplete="email" placeholder="you@example.com"></div>
+    <div class="login-field"><label>Password</label><input type="password" id="login-password" autocomplete="current-password" placeholder="••••••••"></div>
+    <button class="login-btn" id="login-btn" onclick="signIn()">Sign In</button>
+    <div class="login-err" id="login-err"></div>
   </div>
 </div>
 
 <!-- DASHBOARD -->
-<div class="dash-wrap" id="dash-wrap">
+<div class="dash" id="dash">
   <div class="dash-header">
-    <span class="dash-logo">Slam <em>Diego</em></span>
-    <span class="dash-subtitle">Personal Dashboard · For Josh's eyes only</span>
+    <div class="dash-logo">Slam <em>Diego</em></div>
+    <div class="dash-actions">
+      <button class="btn btn-primary" onclick="openAddProject()">+ Project</button>
+      <button class="btn btn-ghost" onclick="openAddSection()">+ Section</button>
+      <button class="btn btn-ghost" onclick="signOut()">Sign Out</button>
+    </div>
   </div>
-
-  <div class="section-label">Tools</div>
-  <div class="card-grid">
-    <a class="site-card" href="https://oornoto.github.io/hof-workspace" target="_blank">
-      <div class="card-icon">⚾</div>
-      <div class="card-body">
-        <span class="card-name">HOF Card Assignment</span>
-        <span class="card-desc">Decision workspace for building the optimal one-card-per-set assignment of Hall of Fame rookie cards.</span>
-        <span class="card-url">oornoto.github.io/hof-workspace</span>
-      </div>
-      <div class="card-arrow">→</div>
-    </a>
-
-    <a class="site-card" href="https://oornoto.github.io/HOF_rookie_cards" target="_blank">
-      <div class="card-icon">📊</div>
-      <div class="card-body">
-        <span class="card-name">HOF Set Ranker</span>
-        <span class="card-desc">Interactive scorer that ranks 742 card sets by Hall of Fame rookie card quality using configurable WAR formulas and tier weights.</span>
-        <span class="card-url">oornoto.github.io/HOF_rookie_cards</span>
-      </div>
-      <div class="card-arrow">→</div>
-    </a>
-  </div>
-
-  <div class="section-label">Sites</div>
-  <div class="card-grid">
-    <a class="site-card" href="https://slamdiego.com" target="_blank">
-      <div class="card-icon">🏟️</div>
-      <div class="card-body">
-        <span class="card-name">Slam Diego</span>
-        <span class="card-desc">Public Padres fan page with daily stat-driven facts pulled live. The site you're on.</span>
-        <span class="card-url">slamdiego.com</span>
-      </div>
-      <div class="card-arrow">→</div>
-    </a>
-
-    <a class="site-card" href="https://slamdiego.vercel.app" target="_blank">
-      <div class="card-icon">🃏</div>
-      <div class="card-body">
-        <span class="card-name">Card Gallery</span>
-        <span class="card-desc">Personal baseball card collection gallery. Moving to cards.slamdiego.com.</span>
-        <span class="card-url">slamdiego.vercel.app → cards.slamdiego.com</span>
-      </div>
-      <div class="card-arrow">→</div>
-    </a>
-  </div>
-
+  <div id="sections-container"><div class="loading"><div class="spinner"></div>Loading…</div></div>
   <div class="dash-footer">
-    <a class="footer-home" href="/">← slamdiego.com</a>
-    <button class="footer-lock" onclick="lock()">lock</button>
+    <a class="footer-link" href="/">← slamdiego.com</a>
+    <a class="footer-link" href="mailto:josh@slamdiego.com">josh@slamdiego.com</a>
+  </div>
+</div>
+
+<!-- ADD/EDIT PROJECT FORM -->
+<div class="overlay" id="project-overlay">
+  <div class="form-box">
+    <div class="form-title" id="form-title">Add Project</div>
+    <div class="form-field"><label>Section</label><select id="form-section"></select></div>
+    <div class="form-field"><label>Project Name</label><input type="text" id="form-name" placeholder="e.g. Collection Planner"></div>
+    <div class="form-field"><label>Description</label><textarea id="form-desc" placeholder="One line description…"></textarea></div>
+    <div class="form-field"><label>Primary URL</label><input type="url" id="form-url" placeholder="https://…"></div>
+    <span class="svc-label">Supporting Services</span>
+    <div id="svc-rows"></div>
+    <button class="add-svc-btn" onclick="addSvcRow()">+ Add service</button>
+    <div class="form-err" id="form-err"></div>
+    <div class="form-actions">
+      <div><button class="btn btn-ghost btn-sm" id="delete-project-btn" style="display:none;border-color:#e0c0c0;color:#c0392b" onclick="deleteProject()">Delete Project</button></div>
+      <div class="form-actions-right">
+        <button class="btn btn-ghost" onclick="closeProjectForm()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveProject()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD SECTION FORM -->
+<div class="overlay" id="section-overlay">
+  <div class="form-box" style="max-width:360px">
+    <div class="form-title">Add Section</div>
+    <div class="form-field"><label>Section Name</label><input type="text" id="section-name" placeholder="e.g. Work Tools"></div>
+    <div class="form-err" id="section-err"></div>
+    <div class="form-actions"><div></div><div class="form-actions-right">
+      <button class="btn btn-ghost" onclick="closeSectionForm()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSection()">Save</button>
+    </div></div>
   </div>
 </div>
 
 <script>
-const PASSWORD = 'gwynn';
-const SESSION_KEY = 'sd_dashboard_auth';
+const SUPABASE_URL = 'https://xapjddhzjnumufmfwdiw.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhhcGpkZGh6am51bXVmbWZ3ZGl3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc0MjE1NzUsImV4cCI6MjA5Mjk5NzU3NX0.bjTzvqYbMvWGKbG7x7eZo2eobgvVen0UJzEWjAbPxyU';
 
-function checkPw() {
-  const val = document.getElementById('pw-input').value;
-  if (val === PASSWORD) {
-    sessionStorage.setItem(SESSION_KEY, '1');
+let accessToken = null;
+let sections = [];
+let collapsedSections = new Set();
+let editingProjectId = null;
+let editingProjectSectionId = null;
+
+// ── AUTH ──
+async function signIn() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const errEl = document.getElementById('login-err');
+  const btn = document.getElementById('login-btn');
+  errEl.textContent = '';
+  if (!email || !password) { errEl.textContent = 'Email and password are required.'; return; }
+  btn.textContent = 'Signing in…'; btn.disabled = true;
+  try {
+    const res = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (!res.ok) { errEl.textContent = data.error || 'Sign in failed.'; btn.textContent = 'Sign In'; btn.disabled = false; return; }
+    accessToken = data.access_token;
+    sessionStorage.setItem('sd_token', accessToken);
     showDash();
-  } else {
-    document.getElementById('pw-err').textContent = 'Incorrect.';
-    document.getElementById('pw-input').value = '';
-    document.getElementById('pw-input').focus();
+  } catch(e) {
+    errEl.textContent = 'Network error. Please try again.';
+    btn.textContent = 'Sign In'; btn.disabled = false;
   }
 }
 
-function showDash() {
-  document.getElementById('login-wrap').style.display = 'none';
-  const dash = document.getElementById('dash-wrap');
-  dash.classList.add('visible');
-}
-
-function lock() {
-  sessionStorage.removeItem(SESSION_KEY);
+async function signOut() {
+  sessionStorage.removeItem('sd_token');
+  accessToken = null;
   location.reload();
 }
 
-document.getElementById('pw-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') checkPw();
-});
+async function showDash() {
+  document.getElementById('login-wrap').style.display = 'none';
+  document.getElementById('dash').classList.add('visible');
+  await loadProjects();
+}
 
-// Auto-unlock if already authed this session
-if (sessionStorage.getItem(SESSION_KEY) === '1') showDash();
+// ── API ──
+async function api(path, method='GET', body=null) {
+  const opts = {
+    method,
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json'
+    }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(path, opts);
+  if (res.status === 401) { signOut(); return null; }
+  return res;
+}
+
+async function loadProjects() {
+  document.getElementById('sections-container').innerHTML = '<div class="loading"><div class="spinner"></div>Loading…</div>';
+  const res = await api('/api/projects');
+  if (!res) return;
+  sections = await res.json();
+  render();
+}
+
+// ── RENDER ──
+function render() {
+  const container = document.getElementById('sections-container');
+  if (!sections.length) {
+    container.innerHTML = '<div class="loading" style="color:var(--muted)">No projects yet — click + Project to add one.</div>';
+    return;
+  }
+  container.innerHTML = sections.map(section => {
+    const collapsed = collapsedSections.has(section.id);
+    return `<div class="section">
+      <div class="section-header" onclick="toggleSection('${section.id}')">
+        <span class="section-name">${section.name}</span>
+        <span class="section-count">${section.projects.length}</span>
+        <div class="section-rule"></div>
+        <span class="section-toggle ${collapsed ? 'collapsed' : ''}">▾</span>
+      </div>
+      <div class="section-grid ${collapsed ? 'hidden' : ''}">
+        ${section.projects.map(p => renderCard(p, section.id)).join('')}
+      </div>
+      <div class="section-footer">
+        <button class="btn btn-ghost btn-sm" onclick="openAddProject('${section.id}')">+ Add to ${section.name}</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Wire flip buttons
+  document.querySelectorAll('.flip-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const wrap = btn.closest('.card-wrap');
+      wrap.classList.toggle('flipped');
+      btn.textContent = wrap.classList.contains('flipped') ? '← back' : 'stack →';
+    });
+  });
+}
+
+function renderCard(project, sectionId) {
+  const servicesHtml = project.services?.map(s =>
+    `<div class="service-item">
+      <span class="service-name">${s.name}</span>
+      <a class="service-link" href="${s.url}" target="_blank" rel="noopener noreferrer">${s.url.replace('https://','').replace('http://','').split('/')[0]}</a>
+    </div>`
+  ).join('') || '<div style="color:var(--muted);font-size:0.65rem">No services added</div>';
+
+  return `<div class="card-wrap" id="card-${project.id}">
+    <div class="card-inner">
+      <div class="card-face card-face-front">
+        <div class="card-name">${project.name}</div>
+        <div class="card-desc">${project.description || ''}</div>
+        <div class="card-bottom">
+          <a class="card-url" href="${project.url}" target="_blank" rel="noopener noreferrer">${project.url.replace('https://','').replace('http://','')}</a>
+          <button class="flip-btn">stack →</button>
+        </div>
+      </div>
+      <div class="card-face card-face-back">
+        <div class="card-back-title">Built with</div>
+        <div class="services-list">${servicesHtml}</div>
+        <div class="card-back-actions">
+          <button class="btn btn-ghost btn-sm" onclick="openEditProject('${project.id}','${sectionId}')">Edit</button>
+          <button class="flip-btn">← back</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleSection(id) {
+  if (collapsedSections.has(id)) collapsedSections.delete(id);
+  else collapsedSections.add(id);
+  render();
+}
+
+// ── ADD/EDIT PROJECT ──
+function openAddProject(sectionId) {
+  editingProjectId = null;
+  editingProjectSectionId = sectionId || sections[0]?.id;
+  document.getElementById('form-title').textContent = 'Add Project';
+  document.getElementById('form-name').value = '';
+  document.getElementById('form-desc').value = '';
+  document.getElementById('form-url').value = '';
+  document.getElementById('form-err').textContent = '';
+  document.getElementById('delete-project-btn').style.display = 'none';
+  populateSectionSelect(editingProjectSectionId);
+  document.getElementById('svc-rows').innerHTML = '';
+  addSvcRow();
+  document.getElementById('project-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('form-name').focus(), 100);
+}
+
+function openEditProject(projectId, sectionId) {
+  const section = sections.find(s => s.id === sectionId);
+  const project = section?.projects.find(p => p.id === projectId);
+  if (!project) return;
+  editingProjectId = projectId;
+  editingProjectSectionId = sectionId;
+  document.getElementById('form-title').textContent = 'Edit Project';
+  document.getElementById('form-name').value = project.name;
+  document.getElementById('form-desc').value = project.description || '';
+  document.getElementById('form-url').value = project.url;
+  document.getElementById('form-err').textContent = '';
+  document.getElementById('delete-project-btn').style.display = 'block';
+  populateSectionSelect(sectionId);
+  document.getElementById('svc-rows').innerHTML = '';
+  (project.services || []).forEach(s => addSvcRow(s.name, s.url));
+  if (!project.services?.length) addSvcRow();
+  document.getElementById('project-overlay').classList.add('open');
+}
+
+function populateSectionSelect(selectedId) {
+  document.getElementById('form-section').innerHTML = sections.map(s =>
+    `<option value="${s.id}" ${s.id === selectedId ? 'selected' : ''}>${s.name}</option>`
+  ).join('');
+}
+
+function closeProjectForm() { document.getElementById('project-overlay').classList.remove('open'); }
+
+function addSvcRow(name='', url='') {
+  const row = document.createElement('div');
+  row.className = 'svc-row';
+  row.innerHTML = `<input type="text" placeholder="Service name" value="${name}" class="svc-name"><input type="url" placeholder="https://…" value="${url}" class="svc-url"><button class="rm-btn" onclick="this.parentElement.remove()">✕</button>`;
+  document.getElementById('svc-rows').appendChild(row);
+}
+
+async function saveProject() {
+  const name = document.getElementById('form-name').value.trim();
+  const desc = document.getElementById('form-desc').value.trim();
+  const url = document.getElementById('form-url').value.trim();
+  const sectionId = document.getElementById('form-section').value;
+  const errEl = document.getElementById('form-err');
+  errEl.textContent = '';
+  if (!name) { errEl.textContent = 'Project name is required.'; return; }
+  if (!url) { errEl.textContent = 'URL is required.'; return; }
+  const services = [...document.querySelectorAll('.svc-row')].map(row => ({
+    name: row.querySelector('.svc-name').value.trim(),
+    url: row.querySelector('.svc-url').value.trim()
+  })).filter(s => s.name && s.url);
+
+  let res;
+  if (editingProjectId) {
+    res = await api(`/api/project?id=${editingProjectId}`, 'PUT', { name, description: desc, url, section_id: sectionId, services });
+  } else {
+    res = await api('/api/projects', 'POST', { section_id: sectionId, name, description: desc, url, services });
+  }
+  if (!res || !res.ok) { errEl.textContent = 'Save failed. Please try again.'; return; }
+  closeProjectForm();
+  await loadProjects();
+  toast(editingProjectId ? 'Project updated' : 'Project added', 'success');
+}
+
+async function deleteProject() {
+  if (!editingProjectId) return;
+  if (!confirm('Delete this project? This cannot be undone.')) return;
+  const res = await api(`/api/project?id=${editingProjectId}`, 'DELETE');
+  if (!res || !res.ok) { document.getElementById('form-err').textContent = 'Delete failed.'; return; }
+  closeProjectForm();
+  await loadProjects();
+  toast('Project deleted', 'success');
+}
+
+// ── ADD SECTION ──
+function openAddSection() {
+  document.getElementById('section-name').value = '';
+  document.getElementById('section-err').textContent = '';
+  document.getElementById('section-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('section-name').focus(), 100);
+}
+function closeSectionForm() { document.getElementById('section-overlay').classList.remove('open'); }
+
+async function saveSection() {
+  const name = document.getElementById('section-name').value.trim();
+  if (!name) { document.getElementById('section-err').textContent = 'Name is required.'; return; }
+  const display_order = sections.length;
+  const res = await api('/api/sections', 'POST', { name, display_order });
+  if (!res || !res.ok) { document.getElementById('section-err').textContent = 'Save failed.'; return; }
+  closeSectionForm();
+  await loadProjects();
+  toast('Section added', 'success');
+}
+
+// ── TOAST ──
+function toast(msg, type='success') {
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 2500);
+}
+
+// ── CLOSE OVERLAYS ──
+document.querySelectorAll('.overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open'));
+});
+document.getElementById('login-email').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('login-password').focus(); });
+document.getElementById('login-password').addEventListener('keydown', e => { if (e.key === 'Enter') signIn(); });
+
+// ── INIT ──
+const savedToken = sessionStorage.getItem('sd_token');
+if (savedToken) { accessToken = savedToken; showDash(); }
 </script>
 </body>
 </html>
