@@ -269,6 +269,7 @@ function render() {
         <span class="section-name">${section.name}</span>
         <span class="section-count">${section.projects.length}</span>
         <div class="section-rule"></div>
+        <button class="btn btn-ghost btn-sm" style="border-color:#e0c0c0;color:#c0392b;flex-shrink:0" onclick="deleteSection('${section.id}',event)">Delete</button>
         <span class="section-toggle ${collapsed ? 'collapsed' : ''}">▾</span>
       </div>
       <div class="section-grid ${collapsed ? 'hidden' : ''}">
@@ -412,6 +413,21 @@ async function deleteProject() {
   closeProjectForm();
   await loadProjects();
   toast('Project deleted', 'success');
+}
+
+async function deleteSection(id, event) {
+  event.stopPropagation();
+  const section = sections.find(s => s.id === id);
+  if (!section) return;
+  const n = section.projects.length;
+  const msg = n > 0
+    ? `Delete section "${section.name}"? This will also delete ${n} project${n === 1 ? '' : 's'} and all their services. This cannot be undone.`
+    : `Delete section "${section.name}"? This cannot be undone.`;
+  if (!confirm(msg)) return;
+  const res = await api(`/api/sections?id=${id}`, 'DELETE');
+  if (!res || !res.ok) { toast('Delete failed', 'error'); return; }
+  await loadProjects();
+  toast('Section deleted', 'success');
 }
 
 // ── ADD SECTION ──
