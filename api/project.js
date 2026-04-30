@@ -1,4 +1,4 @@
-import { getServiceClient, verifyUser, setSecurityHeaders } from './_lib.js';
+import { getDashboardClient, verifyUser, setSecurityHeaders } from './_lib.js';
 
 export default async function handler(req, res) {
   setSecurityHeaders(res);
@@ -9,7 +9,7 @@ export default async function handler(req, res) {
   const { id } = req.query;
   if (!id) return res.status(400).json({ error: 'Project ID required' });
 
-  const supabase = getServiceClient();
+  const supabase = getDashboardClient();
 
   // Verify project belongs to this user
   const { data: existing } = await supabase

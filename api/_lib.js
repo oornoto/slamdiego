@@ -9,6 +9,18 @@ export function getServiceClient() {
   );
 }
 
+// Service role client scoped to the dashboard schema
+export function getDashboardClient() {
+  return createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    {
+      auth: { autoRefreshToken: false, persistSession: false },
+      db: { schema: 'dashboard' }
+    }
+  );
+}
+
 // Verify the user's JWT and return their user_id
 export async function verifyUser(req) {
   const auth = req.headers.authorization;

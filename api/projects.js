@@ -1,4 +1,4 @@
-import { getServiceClient, verifyUser, setSecurityHeaders } from './_lib.js';
+import { getDashboardClient, verifyUser, setSecurityHeaders } from './_lib.js';
 
 export default async function handler(req, res) {
   setSecurityHeaders(res);
@@ -6,7 +6,7 @@ export default async function handler(req, res) {
   const user = await verifyUser(req);
   if (!user) return res.status(401).json({ error: 'Unauthorized' });
 
-  const supabase = getServiceClient();
+  const supabase = getDashboardClient();
 
   if (req.method === 'GET') {
     // Fetch all sections with their projects and services
