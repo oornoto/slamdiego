@@ -102,6 +102,12 @@ html, body { min-height: 100%; background: var(--sand); color: var(--text); font
 .form-actions-right { display: flex; gap: 8px; }
 .form-err { font-size: 0.68rem; color: #c0392b; margin-top: 8px; min-height: 16px; }
 
+/* SECTION MANAGER */
+.section-mgr-divider { height: 1px; background: var(--border); margin: 20px 0; }
+.section-mgr-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.section-mgr-name { flex: 1; font-size: 0.78rem; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.section-mgr-count { font-size: 0.6rem; color: var(--muted); background: var(--border); border-radius: 99px; padding: 1px 8px; flex-shrink: 0; }
+
 /* FOOTER */
 .dash-footer { margin-top: 48px; padding-top: 16px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
 .footer-link { font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); text-decoration: none; transition: color 0.2s; }
@@ -138,7 +144,7 @@ html, body { min-height: 100%; background: var(--sand); color: var(--text); font
     <div class="dash-logo">Slam <em>Diego</em></div>
     <div class="dash-actions">
       <button class="btn btn-primary" onclick="openAddProject()">+ Project</button>
-      <button class="btn btn-ghost" onclick="openAddSection()">+ Section</button>
+      <button class="btn btn-ghost" onclick="openAddSection()">+/- Section</button>
       <button class="btn btn-ghost" onclick="signOut()">Sign Out</button>
     </div>
   </div>
@@ -171,16 +177,21 @@ html, body { min-height: 100%; background: var(--sand); color: var(--text); font
   </div>
 </div>
 
-<!-- ADD SECTION FORM -->
+<!-- SECTION MANAGER -->
 <div class="overlay" id="section-overlay">
   <div class="form-box" style="max-width:360px">
-    <div class="form-title">Add Section</div>
-    <div class="form-field"><label>Section Name</label><input type="text" id="section-name" placeholder="e.g. Work Tools"></div>
+    <div class="form-title">Sections</div>
+    <div class="form-field"><label>New Section Name</label><input type="text" id="section-name" placeholder="e.g. Work Tools"></div>
     <div class="form-err" id="section-err"></div>
-    <div class="form-actions"><div></div><div class="form-actions-right">
+    <div class="form-actions" style="margin-top:14px"><div></div><div class="form-actions-right">
       <button class="btn btn-ghost" onclick="closeSectionForm()">Cancel</button>
-      <button class="btn btn-primary" onclick="saveSection()">Save</button>
+      <button class="btn btn-primary" onclick="saveSection()">Add</button>
     </div></div>
+    <div id="section-delete-area" style="display:none">
+      <div class="section-mgr-divider"></div>
+      <span class="svc-label">Delete a section</span>
+      <div id="section-delete-list"></div>
+    </div>
   </div>
 </div>
 
@@ -269,7 +280,6 @@ function render() {
         <span class="section-name">${section.name}</span>
         <span class="section-count">${section.projects.length}</span>
         <div class="section-rule"></div>
-        <button class="btn btn-ghost btn-sm" style="border-color:#e0c0c0;color:#c0392b;flex-shrink:0" onclick="deleteSection('${section.id}',event)">Delete</button>
         <span class="section-toggle ${collapsed ? 'collapsed' : ''}">▾</span>
       </div>
       <div class="section-grid ${collapsed ? 'hidden' : ''}">
@@ -415,8 +425,31 @@ async function deleteProject() {
   toast('Project deleted', 'success');
 }
 
-async function deleteSection(id, event) {
-  event.stopPropagation();
+// ── SECTION MANAGER ──
+function openAddSection() {
+  document.getElementById('section-name').value = '';
+  document.getElementById('section-err').textContent = '';
+  renderSectionDeleteList();
+  document.getElementById('section-overlay').classList.add('open');
+  setTimeout(() => document.getElementById('section-name').focus(), 100);
+}
+
+function renderSectionDeleteList() {
+  const area = document.getElementById('section-delete-area');
+  const list = document.getElementById('section-delete-list');
+  if (!sections.length) { area.style.display = 'none'; return; }
+  area.style.display = 'block';
+  list.innerHTML = sections.map(s => {
+    const n = s.projects.length;
+    return `<div class="section-mgr-row">
+      <span class="section-mgr-name">${s.name}</span>
+      <span class="section-mgr-count">${n} project${n === 1 ? '' : 's'}</span>
+      <button class="rm-btn" onclick="confirmDeleteSection('${s.id}')">Delete</button>
+    </div>`;
+  }).join('');
+}
+
+async function confirmDeleteSection(id) {
   const section = sections.find(s => s.id === id);
   if (!section) return;
   const n = section.projects.length;
@@ -426,16 +459,9 @@ async function deleteSection(id, event) {
   if (!confirm(msg)) return;
   const res = await api(`/api/sections?id=${id}`, 'DELETE');
   if (!res || !res.ok) { toast('Delete failed', 'error'); return; }
+  closeSectionForm();
   await loadProjects();
   toast('Section deleted', 'success');
-}
-
-// ── ADD SECTION ──
-function openAddSection() {
-  document.getElementById('section-name').value = '';
-  document.getElementById('section-err').textContent = '';
-  document.getElementById('section-overlay').classList.add('open');
-  setTimeout(() => document.getElementById('section-name').focus(), 100);
 }
 function closeSectionForm() { document.getElementById('section-overlay').classList.remove('open'); }
 
