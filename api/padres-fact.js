@@ -15,25 +15,21 @@ export default async function handler(req, res) {
   const today = new Date();
   const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  const dateStr = `${days[today.getDay()]}, ${months[today.getMonth()]} ${today.getDate()}, ${today.getFullYear()}`;
+  const prompt = `You are a San Diego Padres historian and statistician. Today is ${months[today.getMonth()]} ${today.getDate()}.
 
-  const prompt = `You are a San Diego Padres historian and statistician. Today is ${dateStr} (month ${today.getMonth() + 1}, day ${today.getDate()}).
+Write one short, stats-driven fact about the San Diego Padres following these priorities in order:
 
-Generate a single, compelling, stats-driven Padres fact for today. Focus on one of:
-- A notable Padres game or event that happened on this calendar date (any year)
-- A remarkable statistical achievement or milestone in franchise history
-- A fascinating historical stat or record about the Padres
-- A notable player's career stat or milestone that Padres fans would love
+PRIORITY 1 — Search Padres history for anything that happened on ${months[today.getMonth()]} ${today.getDate()} (any year, 1969–present): a game result, no-hitter, trade, signing, draft pick, debut, record broken, or any other notable event. If you find one, write about it.
 
-Requirements:
-- Lead with a specific number or statistic (WAR, ERA, batting average, wins, streak, etc.)
-- Be precise — use real statistics
-- Be 2–4 sentences maximum
-- Do NOT mention AI or that you are generating this
-- Write as if it's a caption in a baseball almanac
-- End with the year in parentheses if referencing a specific event
+PRIORITY 2 — If nothing notable happened on this date, write about any significant Padres moment or player from franchise history. Choose from the full breadth of Padres history — do not default to Tony Gwynn. Draw from players such as: Nate Colbert, Randy Jones, Rollie Fingers, Dave Winfield, Garry Templeton, Steve Garvey, Benito Santiago, Ken Caminiti, Trevor Hoffman, Jake Peavy, Adrian Gonzalez, Chase Headley, Fernando Tatis Jr., Manny Machado, Yu Darvish, Joe Musgrove, or any other Padre.
 
-Just write the fact, nothing else. No preamble, no title.`;
+Format rules:
+- Open with a specific number or statistic (batting average, ERA, WAR, strikeouts, streak length, etc.)
+- Use real, verifiable statistics only
+- 2–4 sentences maximum
+- Written like a caption in a baseball almanac
+- If writing about a specific event, end with the year in parentheses
+- Output only the fact — no preamble, no title, nothing else`;
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
