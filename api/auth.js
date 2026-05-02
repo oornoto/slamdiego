@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { getServiceClient } from './_lib.js';
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -40,7 +41,8 @@ export default async function handler(req, res) {
     const token = getToken(req);
     if (!token) return res.status(401).json({ error: 'Unauthorized' });
 
-    await supabase.auth.admin.signOut(token);
+    const serviceClient = getServiceClient();
+    await serviceClient.auth.admin.signOut(token);
     return res.status(200).json({ success: true });
   }
 
