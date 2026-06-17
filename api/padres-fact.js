@@ -12,26 +12,9 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'API key not configured' });
   }
 
-  const today = new Date();
-  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-  const prompt = `You are a San Diego Padres historian and statistician. Today is ${months[today.getMonth()]} ${today.getDate()}.
+  const dateStr = new Date().toLocaleDateString('en-US', { timeZone: 'America/New_York', month: 'long', day: 'numeric' });
 
-Write one short, stats-driven fact about the San Diego Padres following these priorities in order:
-
-PRIORITY 1 — Search Padres history for anything that happened on ${months[today.getMonth()]} ${today.getDate()} (any year, 1969–present): a game result, no-hitter, trade, signing, draft pick, debut, record broken, or any other notable event. If you find one, write about it.
-
-PRIORITY 2 — If nothing notable happened on this date, write about any significant Padres moment or player from franchise history. Choose from the full breadth of Padres history — do not default to Tony Gwynn. Draw from players such as: Nate Colbert, Randy Jones, Rollie Fingers, Dave Winfield, Garry Templeton, Steve Garvey, Benito Santiago, Ken Caminiti, Trevor Hoffman, Jake Peavy, Adrian Gonzalez, Chase Headley, Fernando Tatis Jr., Manny Machado, Yu Darvish, Joe Musgrove, or any other Padre.
-
-Format rules:
-- Open with a specific number or statistic (batting average, ERA, WAR, strikeouts, streak length, etc.)
-- Use real, verifiable statistics only
-- 2–4 sentences maximum
-- Written like a caption in a baseball almanac
-- If writing about a specific event, end with the year in parentheses
-- Output only the fact — no preamble, no title, nothing else`;
-
-  try {
+  async function callClaude(prompt) {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: {
@@ -41,20 +24,46 @@ Format rules:
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 200,
+        max_tokens: 500,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
         messages: [{ role: 'user', content: prompt }]
       })
     });
 
-    if (!response.ok) {
-      return res.status(502).json({ error: 'Upstream API error' });
-    }
+    if (!response.ok) return null;
 
     const data = await response.json();
-    const text = data?.content?.[0]?.text?.trim();
-    if (!text) return res.status(502).json({ error: 'No content returned' });
+    const content = data?.content;
+    if (!Array.isArray(content)) return null;
 
-    return res.status(200).json({ fact: text });
+    // The response may contain tool_use and tool_result blocks interspersed
+    // with text. Take the last text block, which is the final answer.
+    for (let i = content.length - 1; i >= 0; i--) {
+      if (content[i].type === 'text' && content[i].text?.trim()) {
+        return content[i].text.trim();
+      }
+    }
+    return null;
+  }
+
+  const stage1Prompt = `Today is ${dateStr}. Search the web for something that actually happened on this calendar date in San Diego Padres history — any year from 1969 to present. It can be anything: a win, a loss, a trade, a debut, a benching, a walk-off, a bad loss, an odd stat line. It does not need to be a milestone or a record. It just needs to be real and verifiable.
+
+Search first. Only report what you find. Do not generate facts from memory. If you find something, write it in 2–4 sentences in an almanac caption style, opening with a specific stat or detail. End with the year in parentheses. If you genuinely find nothing for this exact date after searching, respond with only the word: NOTFOUND`;
+
+  const stage2Prompt = `Search the web for a true, verifiable, specific fact from San Diego Padres history — any date, any year from 1969 to present. It can be anything: a win, a loss, a trade, a debut, a strange stat line. It does not need to be a milestone. It just needs to be real and confirmed by a source. Search first. Do not generate from memory. Write it in 2–4 sentences in an almanac caption style, opening with a specific stat or detail. Do not mention a specific date.`;
+
+  try {
+    let fact = await callClaude(stage1Prompt);
+
+    if (!fact || fact === 'NOTFOUND') {
+      fact = await callClaude(stage2Prompt);
+    }
+
+    if (!fact) {
+      return res.status(200).json({ fact: 'The Padres have played since 1969. Check back tomorrow.' });
+    }
+
+    return res.status(200).json({ fact });
   } catch (e) {
     return res.status(500).json({ error: 'Internal error' });
   }
