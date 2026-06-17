@@ -52,7 +52,7 @@ export default async function handler(req, res) {
 
 The fact must be about a San Diego Padres player, achievement, or moment. Do not return facts where the Padres are incidental — for example, do not return a fact that is primarily about an opposing player or team, even if the game was played against the Padres.
 
-Search first. Only report what you find. Do not generate facts from memory. If you find something, write it in 2–4 sentences in an almanac caption style, opening with a specific stat or detail. You must end with the year in parentheses — for example: (2003). Never omit the year. If you genuinely find nothing for this exact date after searching, respond with only the word: NOTFOUND`;
+Search first. Only report what you find. Do not generate facts from memory. Do not use results from 2025 or 2026 — look for historical facts from 1969 through 2024 only. You must end with the year in parentheses — for example: (2003). Never omit the year. If you find something, write it in 2–4 sentences in an almanac caption style, opening with a specific stat or detail. If you genuinely find nothing for this exact date after searching, respond with only the word: NOTFOUND`;
 
   const stage2Prompt = `Search the web for a true, verifiable, specific fact from San Diego Padres history — any date, any year from 1969 to present. It can be anything: a win, a loss, a trade, a debut, a strange stat line. It does not need to be a milestone. It just needs to be real and confirmed by a source.
 
