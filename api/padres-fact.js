@@ -44,8 +44,8 @@ export default async function handler(req, res) {
 
     if (textBlocks.length === 0) return null;
 
-    // Return the longest text block — the final answer is always more substantial than preamble
-    return textBlocks.reduce((a, b) => a.length >= b.length ? a : b);
+    // Return the last text block — the final answer always comes after tool_use and tool_result blocks
+    return textBlocks[textBlocks.length - 1];
   }
 
   const stage1Prompt = `Today is ${dateStr}. Search the web for something that happened on this calendar date in San Diego Padres history — any year from 1969 to present. It can be anything: a win, a loss, a trade, a debut, a benching, a walk-off, a bad loss, an odd stat line. It does not need to be a milestone or a record. It just needs to be real and verifiable.
