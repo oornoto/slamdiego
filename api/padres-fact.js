@@ -38,12 +38,14 @@ export default async function handler(req, res) {
 
     // The response may contain tool_use and tool_result blocks interspersed
     // with text. Take the last text block, which is the final answer.
-    for (let i = content.length - 1; i >= 0; i--) {
-      if (content[i].type === 'text' && content[i].text?.trim()) {
-        return content[i].text.trim();
-      }
-    }
-    return null;
+    const textBlocks = content
+      .filter(block => block.type === 'text' && block.text?.trim())
+      .map(block => block.text.trim());
+
+    if (textBlocks.length === 0) return null;
+
+    // Return the longest text block — the final answer is always more substantial than preamble
+    return textBlocks.reduce((a, b) => a.length >= b.length ? a : b);
   }
 
   const stage1Prompt = `Today is ${dateStr}. Search the web for something that actually happened on this calendar date in San Diego Padres history — any year from 1969 to present. It can be anything: a win, a loss, a trade, a debut, a benching, a walk-off, a bad loss, an odd stat line. It does not need to be a milestone or a record. It just needs to be real and verifiable.
