@@ -48,11 +48,17 @@ export default async function handler(req, res) {
     return textBlocks.reduce((a, b) => a.length >= b.length ? a : b);
   }
 
-  const stage1Prompt = `Today is ${dateStr}. Search the web for something that actually happened on this calendar date in San Diego Padres history — any year from 1969 to present. It can be anything: a win, a loss, a trade, a debut, a benching, a walk-off, a bad loss, an odd stat line. It does not need to be a milestone or a record. It just needs to be real and verifiable.
+  const stage1Prompt = `Today is ${dateStr}. Search the web for something that happened on this calendar date in San Diego Padres history — any year from 1969 to present. It can be anything: a win, a loss, a trade, a debut, a benching, a walk-off, a bad loss, an odd stat line. It does not need to be a milestone or a record. It just needs to be real and verifiable.
 
-Search first. Only report what you find. Do not generate facts from memory. If you find something, write it in 2–4 sentences in an almanac caption style, opening with a specific stat or detail. End with the year in parentheses. If you genuinely find nothing for this exact date after searching, respond with only the word: NOTFOUND`;
+The fact must be about a San Diego Padres player, achievement, or moment. Do not return facts where the Padres are incidental — for example, do not return a fact that is primarily about an opposing player or team, even if the game was played against the Padres.
 
-  const stage2Prompt = `Search the web for a true, verifiable, specific fact from San Diego Padres history — any date, any year from 1969 to present. It can be anything: a win, a loss, a trade, a debut, a strange stat line. It does not need to be a milestone. It just needs to be real and confirmed by a source. Search first. Do not generate from memory. Write it in 2–4 sentences in an almanac caption style, opening with a specific stat or detail. Do not mention a specific date.`;
+Search first. Only report what you find. Do not generate facts from memory. If you find something, write it in 2–4 sentences in an almanac caption style, opening with a specific stat or detail. You must end with the year in parentheses — for example: (2003). Never omit the year. If you genuinely find nothing for this exact date after searching, respond with only the word: NOTFOUND`;
+
+  const stage2Prompt = `Search the web for a true, verifiable, specific fact from San Diego Padres history — any date, any year from 1969 to present. It can be anything: a win, a loss, a trade, a debut, a strange stat line. It does not need to be a milestone. It just needs to be real and confirmed by a source.
+
+The fact must be about a San Diego Padres player, achievement, or moment. Do not return facts where the Padres are incidental — for example, do not return a fact that is primarily about an opposing player or team, even if the game was played against the Padres.
+
+Search first. Do not generate from memory. Write it in 2–4 sentences in an almanac caption style, opening with a specific stat or detail. You must end with the year in parentheses — for example: (2003). Never omit the year. Do not mention a specific date.`;
 
   try {
     let fact = await callClaude(stage1Prompt);
