@@ -6,6 +6,7 @@
     "@supabase/supabase-js": "^2.90.1"
   },
   "devDependencies": {
+    "jimp": "^0.22.12",
     "sharp": "^0.35.1"
   }
 }
