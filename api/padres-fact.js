@@ -1,3 +1,15 @@
+import { getDashboardClient } from './_lib.js';
+
+// In-memory cache (per warm serverless instance) keyed by the Eastern date.
+// Backed by a persistent Supabase cache so the paid Anthropic call runs at most
+// once per day globally, regardless of traffic or how many instances are warm.
+let memoryCache = { dateKey: null, fact: null };
+
+// Returns YYYY-MM-DD in US Eastern — the key for "today's fact".
+function easternDateKey() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'America/New_York' });
+}
+
 export default async function handler(req, res) {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-Frame-Options', 'DENY');
@@ -10,6 +22,31 @@ export default async function handler(req, res) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     return res.status(500).json({ error: 'API key not configured' });
+  }
+
+  const dateKey = easternDateKey();
+
+  // Layer 1: in-memory cache on this instance.
+  if (memoryCache.dateKey === dateKey && memoryCache.fact) {
+    return res.status(200).json({ fact: memoryCache.fact, cached: true });
+  }
+
+  // Layer 2: persistent cache in Supabase. Falls through gracefully if the
+  // table doesn't exist yet or the DB is unreachable.
+  let cacheClient = null;
+  try {
+    cacheClient = getDashboardClient();
+    const { data, error } = await cacheClient
+      .from('padres_fact_cache')
+      .select('fact')
+      .eq('fact_date', dateKey)
+      .maybeSingle();
+    if (!error && data?.fact) {
+      memoryCache = { dateKey, fact: data.fact };
+      return res.status(200).json({ fact: data.fact, cached: true });
+    }
+  } catch {
+    cacheClient = null; // Cache unavailable — generate without persistence.
   }
 
   const dateStr = new Date().toLocaleDateString('en-US', { timeZone: 'America/New_York', month: 'long', day: 'numeric' });
@@ -68,7 +105,20 @@ Search first. Do not generate from memory. Write it in 2–4 sentences in an alm
     }
 
     if (!fact) {
+      // Don't cache the fallback — we want to retry generation on the next request.
       return res.status(200).json({ fact: 'The Padres have played since 1969. Check back tomorrow.' });
+    }
+
+    // Persist so the paid call doesn't run again today. upsert dedupes races.
+    memoryCache = { dateKey, fact };
+    if (cacheClient) {
+      try {
+        await cacheClient
+          .from('padres_fact_cache')
+          .upsert({ fact_date: dateKey, fact }, { onConflict: 'fact_date' });
+      } catch {
+        // Persistence is best-effort; the in-memory layer still applies.
+      }
     }
 
     return res.status(200).json({ fact });
