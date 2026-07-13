@@ -1,4 +1,4 @@
-import { getDashboardClient, verifyUser, setSecurityHeaders } from './_lib.js';
+import { getDashboardClient, verifyUser, setSecurityHeaders, validateName } from './_lib.js';
 
 export default async function handler(req, res) {
   setSecurityHeaders(res);
@@ -11,7 +11,8 @@ export default async function handler(req, res) {
   if (req.method === 'POST') {
     const { name, display_order } = req.body;
 
-    if (!name) return res.status(400).json({ error: 'name is required' });
+    const validationError = validateName(name);
+    if (validationError) return res.status(400).json({ error: validationError });
 
     const { data, error } = await supabase
       .from('sections')

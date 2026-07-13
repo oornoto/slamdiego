@@ -1,4 +1,4 @@
-import { getDashboardClient, verifyUser, setSecurityHeaders } from './_lib.js';
+import { getDashboardClient, verifyUser, setSecurityHeaders, validateProjectPayload } from './_lib.js';
 
 export default async function handler(req, res) {
   setSecurityHeaders(res);
@@ -24,8 +24,9 @@ export default async function handler(req, res) {
   if (req.method === 'PUT') {
     const { name, description, url, section_id, display_order, services } = req.body;
 
-    if (!name || !url) {
-      return res.status(400).json({ error: 'name and url are required' });
+    const validationError = validateProjectPayload({ name, description, url, services });
+    if (validationError) {
+      return res.status(400).json({ error: validationError });
     }
 
     // Update project
