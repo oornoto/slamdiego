@@ -4,6 +4,7 @@
     { "src": "/", "dest": "/index.html" },
     { "src": "/api/(.*)", "dest": "/api/$1" },
     { "src": "/dashboard", "dest": "/dashboard.html" },
+    { "src": "/craftworks", "dest": "/craftworks.html" },
     { "src": "/(.*\\.(?:png|ico|svg|jpg|jpeg|gif|webp))", "dest": "/public/$1" },
     { "src": "/(.*)", "dest": "/$1" }
   ]

@@ -1,0 +1,1379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Craftworks Planner — Farm RPG</title>
+<style>
+  :root {
+    --bg: #121a14;
+    --panel: #1a241c;
+    --panel-2: #202c22;
+    --line: #2e3d30;
+    --ink: #d8e6d0;
+    --ink-dim: #8fa48e;
+    --gold: #e0a93e;
+    --gold-dim: #9c7a35;
+    --leaf: #6fbf5e;
+    --red: #d96b5a;
+    --blue: #7aa8c9;
+    --plum: #b48ad0;
+    --radius: 8px;
+    --mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 14px; line-height: 1.45;
+  }
+  img.sprite { image-rendering: pixelated; width: 26px; height: 26px; flex: none; }
+  img.sprite.sm { width: 18px; height: 18px; }
+
+  header {
+    display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
+    padding: 18px 22px 10px; border-bottom: 1px solid var(--line);
+  }
+  header h1 { font-size: 20px; font-weight: 800; letter-spacing: .02em; color: var(--gold); }
+  header .sub { color: var(--ink-dim); font-size: 13px; }
+  #dataStatus { margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--ink-dim); display:flex; gap:10px; align-items:center; }
+  #dataStatus.err { color: var(--red); }
+
+  main {
+    display: grid; gap: 16px; padding: 16px 22px 60px;
+    grid-template-columns: 300px minmax(360px, 1.2fr) minmax(340px, 1fr);
+    align-items: start;
+  }
+  @media (max-width: 1020px) { main { grid-template-columns: 1fr; } }
+
+  section.panel { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); }
+  .panel h2 {
+    font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--gold); padding: 12px 14px 8px; border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .panel h2 .count { color: var(--ink-dim); letter-spacing: 0; text-transform: none; font-weight: 400; margin-left: auto; }
+  .panel .body { padding: 12px 14px; }
+
+  .setGrid { display: grid; grid-template-columns: 1fr 92px; gap: 8px 10px; align-items: center; }
+  .setGrid label { color: var(--ink-dim); font-size: 13px; }
+  .setGrid input[type=number] {
+    width: 100%; background: var(--bg); color: var(--ink); border: 1px solid var(--line);
+    border-radius: 6px; padding: 5px 8px; font-family: var(--mono); font-size: 13px;
+  }
+  input:focus-visible, button:focus-visible, .pick:focus-visible { outline: 2px solid var(--gold); outline-offset: 1px; }
+  .toggleRow { display: flex; align-items: center; justify-content: space-between; margin-top: 8px; }
+  .toggleRow input { accent-color: var(--gold); transform: scale(1.1); }
+
+  button {
+    font: inherit; cursor: pointer; border-radius: 6px; border: 1px solid var(--line);
+    background: var(--panel-2); color: var(--ink); padding: 7px 12px;
+  }
+  button:hover { border-color: var(--gold-dim); }
+  button.primary { background: var(--gold); color: #1c1608; font-weight: 700; border-color: var(--gold); }
+  button.primary:hover { filter: brightness(1.08); }
+  button.tiny { padding: 1px 7px; font-size: 12px; line-height: 1.4; }
+  button:disabled { opacity: .45; cursor: default; }
+  .row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .hint { font-size: 12px; color: var(--ink-dim); margin-top: 8px; }
+
+  input[type=text] {
+    background: var(--bg); color: var(--ink); border: 1px solid var(--line);
+    border-radius: 6px; padding: 6px 8px; font: inherit; width: 100%;
+  }
+
+  /* target picker */
+  #targetResults { margin-top: 6px; display: flex; flex-direction: column; gap: 2px; max-height: 200px; overflow: auto; }
+  .pick { display:flex; align-items:center; gap:8px; text-align:left; }
+  #targetList { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+  .targetRow { display: flex; align-items: center; gap: 8px; padding: 4px 6px; background: var(--panel-2); border-radius: 6px; }
+  .targetRow .tname { flex: 1; font-weight: 600; }
+
+  /* sheet */
+  .slot { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-bottom: 1px dashed var(--line); }
+  .slot:last-child { border-bottom: none; }
+  .slot .idx { font-family: var(--mono); font-size: 12px; color: var(--gold-dim); width: 22px; text-align: right; flex: none; }
+  .slot .cname { font-weight: 600; display:flex; align-items:center; gap:6px; }
+  .slot .uses { font-size: 12px; color: var(--ink-dim); display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+  .slot .uses .arrow { color: var(--gold-dim); }
+  .slot .grow { flex: 1; min-width: 0; }
+  .tag { font-size: 10px; font-family: var(--mono); border-radius: 4px; padding: 0 4px; border: 1px solid; }
+  .tag.target { color: var(--gold); border-color: var(--gold); }
+  .tag.chain  { color: var(--blue); border-color: var(--blue); }
+  .tag.bonus  { color: var(--leaf); border-color: var(--leaf); }
+  .slot .ctl { display: flex; gap: 4px; opacity: .35; }
+  .slot:hover .ctl { opacity: 1; }
+  .emptyNote { color: var(--ink-dim); padding: 18px 14px; }
+
+  /* zones + tables */
+  #zonesOut { display: flex; flex-direction: column; gap: 6px; }
+  .zoneOut { display: flex; align-items: center; gap: 8px; padding: 5px 6px; background: var(--panel-2); border-radius: 6px; }
+  .zoneOut .zname { flex: 1; font-weight: 600; }
+  .zoneOut .zwhy { font-family: var(--mono); font-size: 11px; color: var(--ink-dim); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th, td { padding: 5px 8px; text-align: left; border-bottom: 1px solid var(--line); }
+  th { color: var(--ink-dim); font-weight: 400; font-size: 11px; }
+  td.itemCell { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+  td.mono { font-family: var(--mono); white-space: nowrap; }
+  .chip { font-size: 10px; border-radius: 4px; padding: 1px 5px; font-family: var(--mono); border: 1px solid; white-space: nowrap; }
+  .chip.ok  { color: var(--leaf); border-color: var(--leaf); }
+  .chip.bad { color: var(--red);  border-color: var(--red); }
+  .chip.meh { color: var(--gold); border-color: var(--gold); }
+
+  #summaryBar {
+    display: flex; gap: 18px; flex-wrap: wrap; padding: 10px 14px;
+    border-bottom: 1px solid var(--line); font-family: var(--mono); font-size: 12px;
+  }
+  #summaryBar b { color: var(--gold); font-size: 15px; }
+  #summaryBar span { color: var(--ink-dim); }
+
+  #savedSets { display: flex; flex-direction: column; gap: 6px; }
+  .savedRow { display: flex; align-items: center; gap: 8px; }
+  .savedRow .sname { flex: 1; font-weight: 600; }
+  .savedRow .smeta { font-family: var(--mono); font-size: 11px; color: var(--ink-dim); }
+
+  /* data panel */
+  #dataPanel { display: none; }
+  #dataPanel.open { display: block; }
+  #dataPanel textarea {
+    width: 100%; height: 130px; background: var(--bg); color: var(--ink);
+    border: 1px solid var(--line); border-radius: 6px; font-family: var(--mono); font-size: 11px; padding: 8px; margin-top: 8px;
+  }
+  #dataPanel ol { margin: 8px 0 0 18px; color: var(--ink-dim); font-size: 13px; }
+  #dataPanel a { color: var(--blue); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Craftworks Planner</h1>
+  <div class="sub">pick what you want to craft &rarr; get the set, the zones, and full drop coverage</div>
+  <div id="dataStatus">loading&hellip;</div>
+</header>
+
+<main>
+  <!-- ============ LEFT ============ -->
+  <div style="display:flex; flex-direction:column; gap:16px;">
+    <section class="panel">
+      <h2>Target crafts <span class="count" id="targetCount"></span></h2>
+      <div class="body">
+        <input type="text" id="targetSearch" placeholder="Search craftable items&hellip;" autocomplete="off">
+        <div id="targetResults"></div>
+        <div id="targetList"></div>
+        <div class="row">
+          <button class="primary" id="buildBtn" style="flex:1">Build plan</button>
+        </div>
+        <div class="hint">The plan includes your targets, every craftable component they need, the zones that supply the raw drops, and bonus crafts that soak up everything else those zones drop.</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Settings</h2>
+      <div class="body">
+        <div class="setGrid">
+          <label for="limit">Craftworks slots</label>
+          <input id="limit" type="number" min="1" max="200" value="32">
+          <label for="maxLevel">My crafting level</label>
+          <input id="maxLevel" type="number" min="1" max="99" value="99">
+          <label for="rareCutoff" title="Drops rarer than 1 in N explores are assumed well below inventory cap — no burn risk">Cap-risk cutoff (1 in N)</label>
+          <input id="rareCutoff" type="number" min="1" value="1000">
+          <label for="invCap">Inventory cap</label>
+          <input id="invCap" type="number" min="1" value="53000">
+        </div>
+        <div class="toggleRow"><label for="ironDepot" title="Uses Iron Depot drop tables and treats iron &amp; nails as infinite">Iron Depot (drops + infinite iron/nails)</label><input id="ironDepot" type="checkbox" checked></div>
+        <div class="toggleRow"><label for="runecube">Runecube drop table</label><input id="runecube" type="checkbox"></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Saved plans</h2>
+      <div class="body">
+        <div id="savedSets"><div class="hint">Nothing saved yet.</div></div>
+        <div class="row">
+          <input type="text" id="saveName" placeholder="Name this plan">
+          <button id="saveBtn">Save</button>
+        </div>
+        <div class="row">
+          <button id="exportBtn" class="tiny">Export JSON</button>
+          <button id="importBtn" class="tiny">Import JSON</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ============ CENTER ============ -->
+  <section class="panel">
+    <h2>Craftworks sheet <span class="count" id="sheetCount"></span></h2>
+    <div id="setSheet"><div class="emptyNote">Add one or more target crafts and press <b>Build plan</b>.</div></div>
+  </section>
+
+  <!-- ============ RIGHT ============ -->
+  <div style="display:flex; flex-direction:column; gap:16px;">
+    <section class="panel">
+      <h2>Session path <span class="count" id="pathCount"></span></h2>
+      <div class="body">
+        <div class="setGrid">
+          <label>Session mode</label>
+          <div style="display:flex; gap:6px;">
+            <button id="modeAC" class="tiny">AC</button>
+            <button id="modeAP" class="tiny">AP</button>
+          </div>
+          <label for="sessionMin">Minutes</label>
+          <input id="sessionMin" type="number" min="1" value="10">
+          <label for="clicksPerSec">Clicks / second</label>
+          <input id="clicksPerSec" type="number" min="0.1" step="0.1" value="4">
+          <label for="switchSec">Zone switch (sec)</label>
+          <input id="switchSec" type="number" min="0" value="3">
+        </div>
+        <div class="hint" id="modeHint"></div>
+        <div id="pathOut" style="margin-top:10px;"><div class="hint">Build a plan first, then the path computes from your component levels below.</div></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Component levels</h2>
+      <div class="body">
+        <div class="hint" style="margin-top:0">Current inventory per component — headroom below your cap is what a session can collect before drops void. Blank = 0 (full headroom).</div>
+        <div id="levelsList" style="margin-top:8px;"></div>
+        <div class="row">
+          <button id="importInvBtn" class="tiny">Import from game console</button>
+          <button id="clearLevelsBtn" class="tiny">Clear</button>
+        </div>
+        <div id="invPanel" style="display:none;">
+          <div class="hint">In the game, open <b>My Inventory</b>, open the browser console (F12), paste this snippet, press Enter — the JSON is copied automatically — then paste it below.</div>
+          <textarea id="invSnippetBox" readonly style="height:64px; width:100%; margin-top:6px; background:var(--bg); color:var(--ink); border:1px solid var(--line); border-radius:6px; font-family:var(--mono); font-size:10px; padding:6px;"></textarea>
+          <textarea id="invPasteBox" placeholder='Paste the copied JSON here' style="height:64px; width:100%; margin-top:6px; background:var(--bg); color:var(--ink); border:1px solid var(--line); border-radius:6px; font-family:var(--mono); font-size:11px; padding:6px;"></textarea>
+          <div class="row"><button id="loadInvBtn" class="primary">Load inventory</button></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Zones to explore <span class="count" id="zoneCount"></span></h2>
+      <div class="body"><div id="zonesOut"><div class="hint">Build a plan to see which zones it needs.</div></div></div>
+    </section>
+
+    <section class="panel">
+      <h2>Drop coverage</h2>
+      <div id="summaryBar"></div>
+      <div class="body" style="padding:0; max-height: 420px; overflow:auto;">
+        <table id="ledger"></table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Keep stocked</h2>
+      <div class="body">
+        <div id="stockList"><div class="hint">Non-explorable ingredients (farm, fishing, store) the plan consumes will appear here.</div></div>
+      </div>
+    </section>
+
+    <section class="panel" id="dataPanelWrap">
+      <h2>Game data <span class="count" id="dataMeta"></span></h2>
+      <div class="body">
+        <div class="row" style="margin-top:0">
+          <button id="refreshBtn" class="tiny">Refresh data</button>
+        </div>
+        <div id="dataPanel">
+          <ol>
+            <li>Open <a href="https://api.buddy.farm/graphql" target="_blank" rel="noopener">api.buddy.farm/graphql</a> (a query console loads)</li>
+            <li><button id="copyQueryBtn" class="tiny">Copy query</button> or copy it from the box below, then paste it there and run it</li>
+            <li>Copy the entire JSON result and paste it below</li>
+          </ol>
+          <textarea id="queryBox" readonly style="height:70px" aria-label="GraphQL query to copy"></textarea>
+          <textarea id="pasteBox" placeholder='Paste {"data": {...}} here'></textarea>
+          <div class="row"><button id="loadPasteBtn" class="primary">Load &amp; cache data</button></div>
+          <div class="hint">Cached on this device — you only repeat this when you want fresher data.</div>
+        </div>
+      </div>
+    </section>
+  </div>
+</main>
+
+<script>
+"use strict";
+/* ---------------------------------------------------------------------
+   Storage adapter — this file runs both as a Claude artifact (window.storage)
+   and as a static page on slamdiego.com (localStorage). Same API either way.
+   --------------------------------------------------------------------- */
+const store = (() => {
+  if (typeof window !== "undefined" && window.storage && typeof window.storage.get === "function") {
+    return { kind: "artifact", get: (k) => window.storage.get(k), set: (k, v) => window.storage.set(k, v) };
+  }
+  try {
+    const probe = "__cw_probe__";
+    window.localStorage.setItem(probe, "1");
+    window.localStorage.removeItem(probe);
+    return {
+      kind: "local",
+      async get(k) { const v = window.localStorage.getItem(k); return v == null ? null : { key: k, value: v }; },
+      async set(k, v) { window.localStorage.setItem(k, v); return { key: k, value: v }; },
+    };
+  } catch (e) {
+    const mem = new Map();
+    return {
+      kind: "memory",
+      async get(k) { return mem.has(k) ? { key: k, value: mem.get(k) } : null; },
+      async set(k, v) { mem.set(k, v); return { key: k, value: v }; },
+    };
+  }
+})();
+
+/* =====================================================================
+   Craftworks Planner v2 — target-first
+   Data: api.buddy.farm/graphql (community-measured, courtesy buddy.farm)
+   ===================================================================== */
+
+const GQL_URL = "https://api.buddy.farm/graphql";
+const IMG_BASE = "https://buddy.farm";
+const QUERY = `query {
+  items {
+    id name image canCraft craftingLevel
+    recipeItems { quantity ingredientItem { id name } }
+  }
+  locations {
+    gameId name image type baseDropRate
+    dropRates { ironDepot manualFishing runecube items { rate item { id name } } }
+  }
+}`;
+const DATA_KEY = "craftworks-dataset-v1";
+const SETS_KEY = "craftworks-plans-v2";
+
+// ---------- state ----------
+const S = {
+  items: new Map(),
+  zones: [],
+  targets: [],           // selected target craft ids (order = user's priority)
+  sheet: [],             // planned craftworks list (ids)
+  roles: new Map(),      // id -> "target" | "chain" | "bonus"
+  planZones: [],         // [{zone, needed:[itemIds]}]
+  stock: new Map(),      // id -> {item, usedBy:[names]}
+  saved: {},
+  dataTime: null,
+  mode: "AC",              // "AC" (Apple Cider) | "AP" (Arnold Palmer)
+  levels: {},              // itemId -> current inventory amount
+  path: null,
+};
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const sprite = (item, cls="sprite") =>
+  item && item.image ? `<img class="${cls}" alt="" src="${IMG_BASE}${esc(item.image)}" loading="lazy" onerror="this.style.visibility='hidden'">` : "";
+const rate1in = (perExplore) => perExplore >= 1
+  ? `${perExplore.toFixed(1)}/explore`
+  : `1 in ${Math.round(1/perExplore).toLocaleString()}`;
+
+function settings() {
+  return {
+    limit: Math.max(1, +$("limit").value || 32),
+    maxLevel: Math.max(1, +$("maxLevel").value || 99),
+    ironDepot: $("ironDepot").checked,
+    runecube: $("runecube").checked,
+    rareCutoff: Math.max(1, +$("rareCutoff").value || 1000),
+    invCap: Math.max(1, +$("invCap").value || 53000),
+    mode: S.mode,
+    sessionMin: Math.max(1, +$("sessionMin").value || 10),
+    clicksPerSec: Math.max(0.1, +$("clicksPerSec").value || 4),
+    switchSec: Math.max(0, +$("switchSec").value || 0),
+  };
+}
+function applySettings(v) {
+  if (!v) return;
+  if (v.limit != null) $("limit").value = v.limit;
+  if (v.maxLevel != null) $("maxLevel").value = v.maxLevel;
+  if (v.rareCutoff != null) $("rareCutoff").value = v.rareCutoff;
+  if (v.invCap != null) $("invCap").value = v.invCap;
+  if (v.ironDepot != null) $("ironDepot").checked = v.ironDepot;
+  if (v.runecube != null) $("runecube").checked = v.runecube;
+}
+
+// ---------- data ----------
+const IRON_DEPOT_ITEMS = ["iron", "nails"]; // auto-bought with silver — effectively infinite
+function infiniteIds(s) {
+  if (!s.ironDepot) return new Set();
+  const ids = new Set();
+  for (const it of S.items.values())
+    if (IRON_DEPOT_ITEMS.includes(it.name.toLowerCase())) ids.add(String(it.id));
+  return ids;
+}
+
+function ingest(data, source, when) {
+  S.items.clear(); S.zones = []; S.globalIngredients = new Set();
+  for (const it of data.items) S.items.set(String(it.id), it);
+  for (const it of data.items)
+    for (const r of (it.recipeItems || [])) S.globalIngredients.add(String(r.ingredientItem.id));
+  S.zones = data.locations.filter(l => l.type === "explore");
+  S.dataTime = when || new Date().toISOString();
+  $("dataStatus").textContent = `${source} · ${S.items.size} items · ${S.zones.length} zones`;
+  $("dataStatus").classList.remove("err");
+  $("dataMeta").textContent = new Date(S.dataTime).toLocaleDateString();
+  replan();
+}
+
+async function boot() {
+  // 1) cached dataset
+  let cached = null;
+  try {
+    const r = await store.get(DATA_KEY);
+    if (r && r.value) cached = JSON.parse(r.value);
+  } catch (e) { /* no cache */ }
+  if (cached && cached.data) ingest(cached.data, "cached buddy.farm data", cached.when);
+
+  // 2) try live fetch (works if their CORS ever opens; refreshes cache silently)
+  try {
+    const res = await fetch(GQL_URL, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: QUERY }),
+    });
+    const json = await res.json();
+    if (json.data) {
+      ingest(json.data, "live buddy.farm data");
+      cacheData(json.data);
+      return;
+    }
+  } catch (e) { /* expected: CORS */ }
+
+  if (!cached) {
+    $("dataStatus").textContent = "no data yet — one-time setup below";
+    $("dataStatus").classList.add("err");
+    $("dataPanel").classList.add("open");
+  }
+
+  // saved plans
+  try {
+    const r = await store.get(SETS_KEY);
+    if (r && r.value) S.saved = JSON.parse(r.value);
+  } catch (e) { /* none */ }
+  renderSaved();
+}
+async function cacheData(data) {
+  try { await store.set(DATA_KEY, JSON.stringify({ when: new Date().toISOString(), data })); }
+  catch (e) { /* session-only */ }
+}
+
+$("refreshBtn").onclick = () => $("dataPanel").classList.toggle("open");
+$("queryBox").value = QUERY;
+$("copyQueryBtn").onclick = async () => {
+  const btn = $("copyQueryBtn");
+  const flash = (msg) => { const t = btn.textContent; btn.textContent = msg; setTimeout(() => btn.textContent = t, 1500); };
+  try {
+    await navigator.clipboard.writeText(QUERY);
+    flash("Copied!");
+  } catch (e) {
+    // clipboard API is often blocked in embedded pages — select the box for manual copy
+    const box = $("queryBox");
+    box.focus(); box.select();
+    let ok = false;
+    try { ok = document.execCommand("copy"); } catch (e2) { /* ignored */ }
+    flash(ok ? "Copied!" : "Select & copy below");
+  }
+};
+$("loadPasteBtn").onclick = () => {
+  try {
+    const j = JSON.parse($("pasteBox").value);
+    const data = j.data || j;
+    if (!data.items || !data.locations) throw new Error("missing items/locations");
+    ingest(data, "pasted buddy.farm data");
+    cacheData(data);
+    $("pasteBox").value = "";
+    $("dataPanel").classList.remove("open");
+  } catch (e) { alert("That didn't parse as expected: " + e.message); }
+};
+
+// ---------- indices (built per current settings) ----------
+function dropTableFor(zone, s) {
+  const want = (dr) => !!dr.runecube === s.runecube && !!dr.ironDepot === s.ironDepot && !dr.manualFishing;
+  const dr = zone.dropRates.find(want)
+        || zone.dropRates.find(d => !!d.runecube === s.runecube && !d.manualFishing)
+        || zone.dropRates.find(d => !d.manualFishing)
+        || zone.dropRates[0];
+  return dr ? dr.items : [];
+}
+// itemId -> [{zone, perExplore}]
+function buildDropIndex(s) {
+  const idx = new Map();
+  for (const z of S.zones) {
+    for (const row of dropTableFor(z, s)) {
+      if (!row.item || !row.rate || row.rate <= 0) continue;
+      const id = String(row.item.id);
+      if (!idx.has(id)) idx.set(id, []);
+      idx.get(id).push({ zone: z, perExplore: 1 / row.rate });
+    }
+  }
+  for (const arr of idx.values()) arr.sort((a, b) => b.perExplore - a.perExplore);
+  return idx;
+}
+const recipe = (id) => (S.items.get(id) || {}).recipeItems || [];
+const isCraftable = (id, s) => {
+  const it = S.items.get(id);
+  return !!(it && it.canCraft && it.recipeItems && it.recipeItems.length &&
+            (!it.craftingLevel || it.craftingLevel <= s.maxLevel));
+};
+
+// ---------- planner ----------
+// Chain closure: the set of craftable items (incl. id itself) needed to craft id,
+// walking craftable ingredients recursively. Cycle-safe.
+function chainClosure(id, s, seen = new Set()) {
+  if (seen.has(id)) return seen;
+  seen.add(id);
+  for (const r of recipe(id)) {
+    const ing = String(r.ingredientItem.id);
+    if (isCraftable(ing, s)) chainClosure(ing, s, seen);
+  }
+  return seen;
+}
+
+function buildPlan() {
+  const s = settings();
+  if (S.targets.length === 0) { alert("Add at least one target craft first."); return; }
+  const dropIndex = buildDropIndex(s);
+
+  // ---- 1. targets + their chains (targets are non-negotiable; take slots first) ----
+  const sheet = [];
+  const roles = new Map();
+  const inSheet = new Set();
+  const add = (id, role) => {
+    if (inSheet.has(id)) {
+      // targets outrank chain, chain outranks bonus
+      const rank = { target: 3, chain: 2, bonus: 1 };
+      if (rank[role] > rank[roles.get(id)]) roles.set(id, role);
+      return;
+    }
+    inSheet.add(id); sheet.push(id); roles.set(id, role);
+  };
+  for (const t of S.targets) {
+    for (const id of chainClosure(t, s)) add(id, id === t ? "target" : "chain");
+  }
+  let truncated = false;
+  if (sheet.length > s.limit) { truncated = true; sheet.length = s.limit; }
+
+  // ---- 2. required explorable drops across the whole sheet ----
+  const requiredDrops = () => {
+    const req = new Set();
+    for (const id of sheet) for (const r of recipe(id)) {
+      const ing = String(r.ingredientItem.id);
+      if (!inSheet.has(ing) && dropIndex.has(ing)) req.add(ing);
+    }
+    return req;
+  };
+
+  // ---- 3. zone set cover: fewest zones supplying all required drops ----
+  const coverZones = (need) => {
+    const chosen = [];
+    const uncovered = new Set(need);
+    while (uncovered.size > 0) {
+      let best = null, bestCover = [], bestRate = 0;
+      for (const z of S.zones) {
+        if (chosen.some(c => c.zone === z)) continue;
+        const cover = [];
+        let rateSum = 0;
+        for (const row of dropTableFor(z, s)) {
+          const id = String(row.item.id);
+          if (uncovered.has(id)) { cover.push(id); rateSum += 1 / row.rate; }
+        }
+        if (cover.length > bestCover.length ||
+           (cover.length === bestCover.length && cover.length > 0 && rateSum > bestRate)) {
+          best = z; bestCover = cover; bestRate = rateSum;
+        }
+      }
+      if (!best) break; // some drops unattainable from any zone table
+      chosen.push({ zone: best, needed: [...bestCover] });
+      for (const id of bestCover) uncovered.delete(id);
+    }
+    return { chosen, unattainable: [...uncovered] };
+  };
+  let { chosen: planZones, unattainable } = coverZones(requiredDrops());
+
+  // ---- 4. fill remaining slots: soak up everything else those zones drop ----
+  // pool = all drops of chosen zones; covered = consumed by any sheet recipe
+  const poolOf = () => {
+    const pool = new Map(); // id -> perExplore (max across plan zones)
+    for (const pz of planZones) {
+      for (const row of dropTableFor(pz.zone, s)) {
+        const id = String(row.item.id);
+        const pe = 1 / row.rate;
+        pool.set(id, Math.max(pool.get(id) || 0, pe));
+      }
+    }
+    return pool;
+  };
+  const consumedSet = () => {
+    const c = new Set();
+    for (const id of sheet) for (const r of recipe(id)) c.add(String(r.ingredientItem.id));
+    return c;
+  };
+
+  let outer = 0, stable = false;
+  while (!stable && outer++ < 10) {
+    ({ chosen: planZones, unattainable } = coverZones(requiredDrops()));
+    const sizeBefore = sheet.length;
+
+  let guard = 0;
+  while (sheet.length < s.limit && guard++ < 500) {
+    const pool = poolOf();
+    const covered = consumedSet();
+    const uncoveredPool = [...pool.keys()].filter(id => !covered.has(id));
+    if (uncoveredPool.length === 0) break;
+    const uncoveredWeight = new Map(uncoveredPool.map(id => [id, pool.get(id)]));
+
+    // value model: a drop's value is its explore cost (1/perExplore).
+    // burn risk exists only for drops frequent enough to sit near cap (perExplore >= riskFloor);
+    // ultra-rare drops are assumed far below cap — no risk, and consuming them spends real value.
+    const riskFloor = 1 / s.rareCutoff;
+    const NEAR_CAP_FRACTION = 0.2;   // known inventory within 20% of cap = at risk regardless of rarity
+    const nearCap = (id) => {
+      const lvl = S.levels[id];
+      return lvl != null && (s.invCap - lvl) <= s.invCap * NEAR_CAP_FRACTION;
+    };
+    const atRisk = (pe, id) => pe >= riskFloor || nearCap(id);
+    const weightOf = (pe, id) => atRisk(pe, id) ? 1 / pe : 0;
+
+    let best = null, bestScore = 0, bestChain = null;
+    for (const it of S.items.values()) {
+      const id = String(it.id);
+      if (inSheet.has(id) || !isCraftable(id, s)) continue;
+      // full chain this candidate would add
+      const chain = [...chainClosure(id, s)].filter(x => !inSheet.has(x));
+      if (sheet.length + chain.length > s.limit) continue;
+      // consumption capacity of this candidate chain, given known pinch stocks
+      const hypo = [...sheet, ...chain];
+      const capMap = computeCraftCapacity(hypo, s, dropIndex);
+      let riskGain = 0, safeSpend = 0, offPool = 0;
+      for (const cid of chain) for (const r of recipe(cid)) {
+        const cc = capMap.get(cid);
+        const capFactor = (cc && cc.crafts !== Infinity)
+          ? Math.min(1, (cc.crafts * r.quantity) / Math.max(1, s.invCap * 0.5))
+          : 1;
+        const ing = String(r.ingredientItem.id);
+        if (uncoveredWeight.has(ing)) {
+          const pe = uncoveredWeight.get(ing);
+          if (atRisk(pe, ing)) riskGain += r.quantity * weightOf(pe, ing) * capFactor;
+          else safeSpend += r.quantity * (1 / pe);        // burning slots + rare stock for no risk relief
+        } else if (pool.has(ing)) {
+          const pe = pool.get(ing);
+          if (!atRisk(pe, ing)) safeSpend += r.quantity * (1 / pe); // already-covered safe rares still get spent
+        } else if (!inSheet.has(ing) && !chain.includes(ing) && !dropIndex.has(ing)) {
+          if (!infiniteIds(s).has(ing)) offPool++;   // Iron Depot items are free
+        }
+      }
+      // gate: a bonus craft must relieve at least one at-risk drop
+      if (riskGain <= 0) continue;
+      // where does this chain's output go? closed loop > true apex sink > dangling intermediate
+      const outLvl = S.levels[id];
+      const outStalled = outLvl != null && (s.invCap - outLvl) <= s.invCap * 0.05;
+      const trueApex = !(S.globalIngredients && S.globalIngredients.has(id));
+      const closedInSet = [...sheet, ...chain].some(o => o !== id &&
+        recipe(o).some(r => String(r.ingredientItem.id) === id));
+      let sinkFactor = closedInSet ? 1.10 : (trueApex ? 1.05 : 0.85);
+      if (outStalled) sinkFactor = Math.min(sinkFactor, 0.7);
+      const score = ((riskGain - safeSpend * 0.05) / chain.length - offPool * 0.02) * sinkFactor;
+      if (score > bestScore + 1e-12) { bestScore = score; best = it; bestChain = chain; }
+    }
+    if (!best) break;
+    for (const cid of bestChain) add(cid, "bonus");
+  }
+
+    stable = (sheet.length === sizeBefore);
+  }
+
+  // ---- 4b. close dangling loops: give non-apex outputs an in-set consumer so they
+  // don't fill to cap and stall the slot that produces them ----
+  const danglingIn = (arr) => arr.filter(id =>
+    S.globalIngredients && S.globalIngredients.has(id) &&
+    !arr.some(o => o !== id && recipe(o).some(r => String(r.ingredientItem.id) === id)));
+  let loopGuard = 0;
+  while (sheet.length < s.limit && loopGuard++ < 200) {
+    const dangling = danglingIn(sheet);
+    if (dangling.length === 0) break;
+    let best = null, bestChain = null, bestScore = 0;
+    for (const it of S.items.values()) {
+      const id = String(it.id);
+      if (inSheet.has(id) || !isCraftable(id, s)) continue;
+      const chain = [...chainClosure(id, s)].filter(x => !inSheet.has(x));
+      if (sheet.length + chain.length > s.limit) continue;
+      let closes = 0;
+      for (const cid of chain) for (const r of recipe(cid))
+        if (dangling.includes(String(r.ingredientItem.id))) closes += r.quantity;
+      if (closes === 0) continue;
+      // don't trade one dangle for another: prefer consumers that are themselves apex or fed back in
+      const capMap2 = computeCraftCapacity([...sheet, ...chain], s, dropIndex);
+      const cc2 = capMap2.get(id);
+      const feasible = (cc2 && cc2.crafts !== Infinity) ? Math.min(1, cc2.crafts / 100) : 1;
+      const stillDangles = danglingIn([...sheet, ...chain]).length;
+      const score = (closes * feasible) / (chain.length * (1 + stillDangles * 0.25));
+      if (score > bestScore + 1e-12) { bestScore = score; best = it; bestChain = chain; }
+    }
+    if (!best) break;
+    for (const cid of bestChain) add(cid, "bonus");
+  }
+
+  // final zone cover for whatever the finished sheet needs
+  ({ chosen: planZones, unattainable } = coverZones(requiredDrops()));
+
+  // ---- 5. stock list: consumed ingredients that aren't crafted here, explorable, or infinite ----
+  const infinite = infiniteIds(s);
+  const stock = new Map();
+  for (const id of sheet) for (const r of recipe(id)) {
+    const ing = String(r.ingredientItem.id);
+    if (inSheet.has(ing) || dropIndex.has(ing) || infinite.has(ing)) continue;
+    if (!stock.has(ing)) stock.set(ing, { item: S.items.get(ing) || r.ingredientItem, usedBy: [] });
+    stock.get(ing).usedBy.push((S.items.get(id) || {}).name || id);
+  }
+
+  // ---- 6. order: cheap topological pass (producers above consumers) ----
+  S.sheet = topoOrder(sheet, s);
+  S.roles = roles;
+  S.planZones = planZones;
+  S.stock = stock;
+  S.unattainable = unattainable;
+  S.truncated = truncated;
+  renderAll();
+}
+
+function topoOrder(ids, s) {
+  const inSet = new Set(ids);
+  const deps = new Map();
+  for (const id of ids) {
+    deps.set(id, recipe(id).map(r => String(r.ingredientItem.id)).filter(x => inSet.has(x) && x !== id));
+  }
+  const out = [], done = new Set();
+  const visit = (id, stack) => {
+    if (done.has(id) || stack.has(id)) return;
+    stack.add(id);
+    for (const d of deps.get(id)) visit(d, stack);
+    stack.delete(id); done.add(id); out.push(id);
+  };
+  for (const id of ids) visit(id, new Set());
+  return out;
+}
+
+// ---------- craft capacity (materials-requirements pass) ----------
+// How many times can each sheet recipe actually run, given known stock of its
+// non-explored, non-infinite "pinch" ingredients? Explored-in-plan ingredients
+// are elastic (that's what sessions farm); unknown levels don't bound.
+function computeCraftCapacity(sheetIds, s, dropIndex) {
+  const infinite = infiniteIds(s);
+  const inSheet = new Set(sheetIds);
+  const ordered = topoOrder([...sheetIds], s); // producers first
+  const cap = new Map();  // id -> {crafts, pinch: itemName|null}
+  for (const id of ordered) {
+    let crafts = Infinity, pinch = null;
+    for (const r of recipe(id)) {
+      const ing = String(r.ingredientItem.id);
+      if (infinite.has(ing)) continue;
+      const explored = dropIndex.has(ing);
+      const lvl = S.levels[ing];
+      let supply = Infinity;
+      if (inSheet.has(ing)) {
+        const sub = cap.get(ing);
+        const held = lvl != null ? +lvl : 0;
+        supply = (sub ? sub.crafts : Infinity) === Infinity ? Infinity : sub.crafts + held;
+      } else if (!explored) {
+        supply = lvl != null ? +lvl : Infinity;   // farm/store item: bounded only if we know the stock
+      }
+      // explored & not in sheet -> elastic -> Infinity
+      if (supply !== Infinity) {
+        const c = supply / r.quantity;
+        if (c < crafts) { crafts = c; pinch = (S.items.get(ing) || r.ingredientItem).name; }
+      }
+    }
+    cap.set(id, { crafts, pinch });
+  }
+  return cap;
+}
+
+// justified collectible amount per explored drop: how much the sheet can consume
+function justifiedTargets(sheetIds, s, dropIndex) {
+  const cap = computeCraftCapacity(sheetIds, s, dropIndex);
+  const out = new Map(); // dropId -> {amount, pinch}
+  for (const id of sheetIds) {
+    const c = cap.get(id);
+    for (const r of recipe(id)) {
+      const ing = String(r.ingredientItem.id);
+      if (!dropIndex.has(ing)) continue;
+      const cur = out.get(ing) || { amount: 0, pinch: null };
+      if (c.crafts === Infinity) { cur.amount = Infinity; }
+      else if (cur.amount !== Infinity) {
+        cur.amount += c.crafts * r.quantity;
+        if (c.pinch) cur.pinch = cur.pinch ? cur.pinch : c.pinch;
+      }
+      out.set(ing, cur);
+    }
+  }
+  return out;
+}
+
+// ---------- session pathing ----------
+// Fully-buffed 10-minute assumptions (verified via buddy.farm where possible):
+//   AC: 5x Cabbage Stew -> 5 ciders/click; Cinnamon Sticks -> 1,250 explores/cider.
+//       Neigh (-20% cider stamina) is economy only; stamina assumed non-binding.
+//   AP: 5x Lemon Cream Pie -> 5 palmers/click; Lemon Squeezer -> 500 items/palmer.
+//       Quandry Chowder modeled as +20% palmer effectiveness (parallel to Neigh) — adjust if in-game text differs.
+const AC_EXPLORES_PER_CLICK = 5 * 1250;
+const QC_PALMER_MULT = 1.2;
+const AP_ITEMS_PER_CLICK = 5 * 500 * QC_PALMER_MULT;
+
+function exploresPerClick(zone, mode) {
+  if (mode === "AP") {
+    const bdr = zone.baseDropRate || 0.3;      // items/explore baseline
+    return AP_ITEMS_PER_CLICK / bdr;           // equivalent explores
+  }
+  return AC_EXPLORES_PER_CLICK;
+}
+
+// Water-filling path: repeatedly explore the zone whose still-filling useful
+// drops carry the most value; switch when fills change the ranking.
+function computePath() {
+  const s = settings();
+  if (!S.planZones || S.planZones.length === 0 || S.sheet.length === 0) { S.path = null; return; }
+
+  // useful drops = plan-zone drops consumed by any sheet recipe
+  const consumed = new Set();
+  for (const id of S.sheet) for (const r of recipe(id)) consumed.add(String(r.ingredientItem.id));
+
+  const zones = S.planZones.map(pz => pz.zone);
+  const drops = new Map(); // id -> {item, byZone: Map(zoneName->perExplore), best, headroom, collected}
+  for (const z of zones) {
+    for (const row of dropTableFor(z, s)) {
+      const id = String(row.item.id);
+      if (!consumed.has(id)) continue;
+      if (!drops.has(id)) drops.set(id, { item: S.items.get(id) || row.item, byZone: new Map(), best: 0, headroom: 0, collected: 0 });
+      const d = drops.get(id);
+      const pe = 1 / row.rate;
+      d.byZone.set(z.name, pe);
+      d.best = Math.max(d.best, pe);
+    }
+  }
+  const dropIndexAll = buildDropIndex(s);
+  const justified = justifiedTargets(S.sheet, s, dropIndexAll);
+  for (const d of drops.values()) {
+    const id = String(d.item.id);
+    const cur = +S.levels[id] || 0;
+    let room = Math.max(0, s.invCap - cur);
+    const j = justified.get(id);
+    if (j && j.amount !== Infinity) {
+      const worth = Math.max(0, j.amount - cur);   // stock on hand already covers part of demand
+      if (worth < room) { room = worth; d.pinch = j.pinch; }
+    }
+    d.headroom = room;
+  }
+
+  const zoneScore = (z) => {
+    let sc = 0;
+    for (const d of drops.values()) {
+      const pe = d.byZone.get(z.name);
+      if (pe && d.collected < d.headroom) sc += pe / d.best;
+    }
+    return sc;
+  };
+
+  let timeLeft = s.sessionMin * 60;
+  let cur = null;
+  const segs = [];
+  const filledAt = new Map(); // itemId -> zoneName where it filled
+  let guard = 0;
+  while (timeLeft > 0.05 && guard++ < 2000) {
+    let bestZ = null, bestSc = 0;
+    for (const z of zones) {
+      const sc = zoneScore(z);
+      if (sc > bestSc + 1e-9 || (Math.abs(sc - bestSc) <= 1e-9 && z === cur && sc > 0)) { bestSc = sc; bestZ = z; }
+    }
+    if (!bestZ || bestSc <= 1e-9) break;
+    if (bestZ !== cur) {
+      if (cur !== null) timeLeft -= s.switchSec;
+      if (timeLeft <= 0) break;
+      cur = bestZ;
+      segs.push({ zone: cur, seconds: 0, fills: [], gains: new Map() });
+    }
+    const seg = segs[segs.length - 1];
+    const eps = s.clicksPerSec * exploresPerClick(cur, s.mode); // explores/sec here
+    // next fill event among active drops in this zone
+    let step = timeLeft;
+    for (const d of drops.values()) {
+      const pe = d.byZone.get(cur.name);
+      if (!pe || d.collected >= d.headroom) continue;
+      const t = (d.headroom - d.collected) / (pe * eps);
+      if (t < step) step = t;
+    }
+    step = Math.max(step, 0.01);
+    for (const d of drops.values()) {
+      const pe = d.byZone.get(cur.name);
+      if (!pe || d.collected >= d.headroom) continue;
+      const got = Math.min(d.headroom - d.collected, pe * eps * step);
+      d.collected += got;
+      const id = String(d.item.id);
+      seg.gains.set(id, (seg.gains.get(id) || 0) + got);
+      if (d.collected >= d.headroom - 1e-6 && !filledAt.has(id)) {
+        filledAt.set(id, cur.name);
+        seg.fills.push(d.pinch ? { ...d.item, name: d.item.name + " (enough — " + d.pinch + " is the pinch)" } : d.item);
+      }
+    }
+    seg.seconds += step;
+    timeLeft -= step;
+  }
+  // per-segment: top ongoing collections (rarity-weighted) that did NOT fill there
+  for (const seg of segs) {
+    const filledIds = new Set(seg.fills.map(it => String(it.id)));
+    seg.collecting = [...seg.gains.entries()]
+      .filter(([id]) => !filledIds.has(id))
+      .map(([id, amt]) => {
+        const d = drops.get(id);
+        return { item: d.item, amt, value: amt / Math.max(d.best, 1e-9) * d.best }; // sort by rarity-weighted haul
+      })
+      .sort((a, b) => (b.amt / Math.max(drops.get(String(b.item.id)).best,1e-9)) - (a.amt / Math.max(drops.get(String(a.item.id)).best,1e-9)))
+      .slice(0, 3);
+  }
+  S.path = { segs, timeLeft: Math.max(0, timeLeft), mode: s.mode,
+             done: [...drops.values()].every(d => d.collected >= d.headroom - 1e-6) };
+}
+
+function renderPath() {
+  const box = $("pathOut");
+  const s = settings();
+  $("modeAC").classList.toggle("primary", S.mode === "AC");
+  $("modeAP").classList.toggle("primary", S.mode === "AP");
+  $("modeHint").textContent = S.mode === "AC"
+    ? "Assumes 2 Neigh + 5 Cabbage Stew: 5 ciders/click, 1,250 explores each."
+    : "Assumes 2 Quandry Chowder + 5 Lemon Cream Pie: 5 palmers/click, 500 items each (+20% QC).";
+  if (!S.path || S.path.segs.length === 0) {
+    box.innerHTML = `<div class="hint">${S.sheet.length ? "No useful headroom to fill — set component levels below or lower them." : "Build a plan first."}</div>`;
+    $("pathCount").textContent = "";
+    return;
+  }
+  const mmss = (sec) => `${Math.floor(sec / 60)}:${String(Math.round(sec % 60)).padStart(2, "0")}`;
+  let html = `<table><tr><th></th><th>Zone</th><th>Clicks</th><th>Time</th><th>Yield</th></tr>`;
+  S.path.segs.forEach((seg, i) => {
+    const clicks = Math.ceil(seg.seconds * s.clicksPerSec);
+    const parts = [];
+    if (seg.fills.length) parts.push("fills " + seg.fills.slice(0, 3).map(it => esc(it.name)).join(", ") + (seg.fills.length > 3 ? ` +${seg.fills.length - 3}` : ""));
+    if (seg.collecting && seg.collecting.length)
+      parts.push("collecting " + seg.collecting.map(c => `${esc(c.item.name)} ~${Math.round(c.amt).toLocaleString()}`).join(", "));
+    const fills = parts.length ? parts.join(" · ") : "—";
+    html += `<tr>
+      <td class="mono">${i + 1}</td>
+      <td class="itemCell">${sprite(seg.zone, "sprite sm")}${esc(seg.zone.name)}</td>
+      <td class="mono">${clicks.toLocaleString()}</td>
+      <td class="mono">${mmss(seg.seconds)}</td>
+      <td style="font-size:11px">${fills}</td></tr>`;
+  });
+  html += `</table>`;
+  if (S.path.done && S.path.timeLeft > 5) {
+    html += `<div class="hint">All useful headroom filled with <b>${mmss(S.path.timeLeft)}</b> to spare — extra clicks past this point mostly void.</div>`;
+  } else if (!S.path.done) {
+    const last = S.path.segs[S.path.segs.length - 1];
+    const what = last.collecting && last.collecting.length ? last.collecting.map(c => esc(c.item.name)).join(", ") : "rare components";
+    html += `<div class="hint">Everything that can fill this session fills early; the remaining time farms your scarcest needed drops (${what}) at their best source — once nothing is filling, the ranking stops changing, so the best zone stays the best zone.</div>`;
+  }
+  box.innerHTML = html;
+  $("pathCount").textContent = `${S.path.segs.length} stop${S.path.segs.length === 1 ? "" : "s"}`;
+}
+
+// ---------- component levels ----------
+const LEVELS_KEY = "craftworks-levels-v1";
+async function storeLevels() {
+  try { await store.set(LEVELS_KEY, JSON.stringify(S.levels)); } catch (e) { /* session-only */ }
+}
+function planComponents() {
+  // explored drops the plan consumes + in-plan intermediates consumed by other recipes
+  const s = settings();
+  const consumed = new Set();
+  for (const id of S.sheet) for (const r of recipe(id)) consumed.add(String(r.ingredientItem.id));
+  const dropIndex = buildDropIndex(s);
+  const inSheet = new Set(S.sheet);
+  const out = [];
+  for (const id of consumed) {
+    const it = S.items.get(id);
+    if (!it) continue;
+    if (dropIndex.has(id) || inSheet.has(id)) out.push({ item: it, kind: dropIndex.has(id) ? "drop" : "craft" });
+  }
+  out.sort((a, b) => (a.kind === b.kind ? a.item.name.localeCompare(b.item.name) : a.kind === "drop" ? -1 : 1));
+  return out;
+}
+function renderLevels() {
+  const box = $("levelsList");
+  const comps = planComponents();
+  if (comps.length === 0) { box.innerHTML = `<div class="hint">Build a plan to list its components.</div>`; return; }
+  const s = settings();
+  let html = `<table><tr><th>Component</th><th>Have</th><th>Room</th></tr>`;
+  for (const c of comps) {
+    const id = String(c.item.id);
+    const cur = S.levels[id];
+    const room = Math.max(0, s.invCap - (+cur || 0));
+    html += `<tr>
+      <td class="itemCell">${sprite(c.item, "sprite sm")}${esc(c.item.name)}${c.kind === "craft" ? ' <span class="tag chain">craft</span>' : ""}</td>
+      <td><input type="number" min="0" data-lvl="${id}" value="${cur != null ? esc(cur) : ""}" placeholder="0"
+           style="width:84px; background:var(--bg); color:var(--ink); border:1px solid var(--line); border-radius:6px; padding:3px 6px; font-family:var(--mono); font-size:12px;"></td>
+      <td class="mono">${room.toLocaleString()}</td></tr>`;
+  }
+  box.innerHTML = html + `</table>`;
+  for (const inp of box.querySelectorAll("input[data-lvl]")) {
+    inp.addEventListener("change", () => {
+      const v = inp.value.trim();
+      if (v === "") delete S.levels[inp.dataset.lvl];
+      else S.levels[inp.dataset.lvl] = Math.max(0, +v || 0);
+      storeLevels(); computePath(); renderPath(); renderLevels();
+    });
+  }
+}
+
+const INV_SNIPPET = `(()=>{const j=JSON.stringify({max:+((document.body.innerHTML.match(/more than <strong>([0-9,]+)/)||[])[1]||"0").replace(/,/g,""),q:Object.fromEntries([...document.querySelectorAll(".list-group li")].filter(li=>!li.classList.contains("item-divider")).map(li=>[li.querySelector(".item-title strong")?.textContent.trim(),parseInt(li.querySelector(".item-after")?.textContent.replace(/,/g,""))]).filter(x=>x[0]&&!isNaN(x[1])))});if(typeof copy==="function"){copy(j);return "Inventory copied to clipboard — paste it into the planner."}console.log(j);return "copy() unavailable — copy the JSON printed above."})()`;
+
+function wireLevelsPanel() {
+  $("invSnippetBox").value = INV_SNIPPET;
+  $("importInvBtn").onclick = () => {
+    const p = $("invPanel");
+    p.style.display = p.style.display === "none" ? "block" : "none";
+  };
+  $("clearLevelsBtn").onclick = () => { S.levels = {}; storeLevels(); computePath(); renderPath(); renderLevels(); };
+  $("loadInvBtn").onclick = () => {
+    try {
+      const j = JSON.parse($("invPasteBox").value);
+      const q = j.q || j.quantities || j;
+      let matched = 0;
+      const byName = new Map([...S.items.values()].map(it => [it.name.toLowerCase(), String(it.id)]));
+      for (const [name, qty] of Object.entries(q)) {
+        const id = byName.get(String(name).toLowerCase());
+        if (id != null && isFinite(+qty)) { S.levels[id] = +qty; matched++; }
+      }
+      if (j.max && isFinite(+j.max) && +j.max > 0) $("invCap").value = +j.max;
+      $("invPasteBox").value = "";
+      $("invPanel").style.display = "none";
+      storeLevels(); computePath(); renderPath(); renderLevels();
+      if (matched === 0) alert("No item names matched — did the snippet run on the My Inventory page?");
+    } catch (e) { alert("That didn't parse as JSON: " + e.message); }
+  };
+  $("modeAC").onclick = () => { S.mode = "AC"; computePath(); renderPath(); };
+  $("modeAP").onclick = () => { S.mode = "AP"; computePath(); renderPath(); };
+}
+
+// ---------- rendering ----------
+function renderAll() { renderTargets(); renderSheet(); renderZonesOut(); renderLedger(); renderStock(); renderSaved(); computePath(); renderPath(); renderLevels(); }
+function replan() { if (S.targets.length && S.sheet.length) buildPlan(); else renderAll(); }
+
+function renderTargets() {
+  const box = $("targetList");
+  box.innerHTML = "";
+  for (const id of S.targets) {
+    const it = S.items.get(id);
+    if (!it) continue;
+    const row = document.createElement("div");
+    row.className = "targetRow";
+    row.innerHTML = `${sprite(it, "sprite sm")}<span class="tname">${esc(it.name)}</span>`;
+    const rm = document.createElement("button");
+    rm.className = "tiny"; rm.textContent = "×"; rm.ariaLabel = "Remove " + it.name;
+    rm.onclick = () => { S.targets = S.targets.filter(x => x !== id); renderTargets(); };
+    row.appendChild(rm);
+    box.appendChild(row);
+  }
+  $("targetCount").textContent = S.targets.length ? String(S.targets.length) : "";
+}
+
+$("targetSearch").addEventListener("input", () => {
+  const q = $("targetSearch").value.trim().toLowerCase();
+  const box = $("targetResults");
+  box.innerHTML = "";
+  if (q.length < 2) return;
+  const s = settings();
+  const hits = [...S.items.values()]
+    .filter(it => it.canCraft && it.name.toLowerCase().includes(q) && !S.targets.includes(String(it.id)))
+    .sort((a, b) => a.name.length - b.name.length)
+    .slice(0, 8);
+  for (const it of hits) {
+    const b = document.createElement("button");
+    b.className = "tiny pick";
+    const lvlNote = it.craftingLevel && it.craftingLevel > s.maxLevel
+      ? ` <span style="color:var(--red)">lvl ${it.craftingLevel}</span>` : ` <span style="color:var(--ink-dim)">lvl ${it.craftingLevel || 1}</span>`;
+    b.innerHTML = `${sprite(it, "sprite sm")} ${esc(it.name)}${lvlNote}`;
+    b.onclick = () => {
+      S.targets.push(String(it.id));
+      $("targetSearch").value = ""; box.innerHTML = "";
+      renderTargets();
+    };
+    box.appendChild(b);
+  }
+});
+
+function renderSheet() {
+  const el = $("setSheet");
+  const s = settings();
+  if (S.sheet.length === 0) {
+    el.innerHTML = `<div class="emptyNote">Add one or more target crafts and press <b>Build plan</b>.</div>`;
+  } else {
+    el.innerHTML = "";
+    const inSet = new Set(S.sheet);
+    S.sheet.forEach((id, i) => {
+      const it = S.items.get(id);
+      if (!it) return;
+      const role = S.roles.get(id) || "bonus";
+      const lvl = S.levels[id];
+      const stalled = lvl != null && lvl >= s.invCap;
+      const feedsPlan = S.sheet.some(other => other !== id &&
+        recipe(other).some(r => String(r.ingredientItem.id) === id));
+      const usedInGame = S.globalIngredients && S.globalIngredients.has(id);
+      // apex = no recipe anywhere in the game consumes it (a true sink you sell or donate)
+      // dangling = it IS an ingredient elsewhere, but nothing in this set consumes it, so it fills and stalls
+      let apexTag = "";
+      if (!usedInGame) {
+        apexTag = ' <span class="tag" style="color:var(--gold); border-color:var(--gold)">apex</span>';
+      } else if (!feedsPlan) {
+        apexTag = ' <span class="tag" style="color:var(--plum); border-color:var(--plum)">dangling — no consumer in set</span>';
+      }
+      const stallTag = stalled
+        ? (feedsPlan
+            ? ' <span class="tag" style="color:var(--gold); border-color:var(--gold)">at cap — let crafts drain it</span>'
+            : ' <span class="tag" style="color:var(--red); border-color:var(--red)">at cap — sell some now</span>')
+        : "";
+      const uses = recipe(id).map(r => {
+        const iid = String(r.ingredientItem.id);
+        const ing = S.items.get(iid) || r.ingredientItem;
+        const dim = (inSet.has(iid)) ? "" : "";
+        return `<span${dim}>${sprite(ing, "sprite sm")} ${r.quantity}&times; ${esc(ing.name)}</span>`;
+      }).join(`<span class="arrow"> + </span>`);
+      const div = document.createElement("div");
+      div.className = "slot";
+      div.innerHTML = `
+        <span class="idx">${i + 1}</span>
+        ${sprite(it)}
+        <div class="grow">
+          <div class="cname">${esc(it.name)} <span class="tag ${role}">${role}</span>${apexTag}${stallTag}</div>
+          <div class="uses">${uses} <span class="arrow">&rarr;</span> ${sprite(it, "sprite sm")}</div>
+        </div>
+        <div class="ctl">
+          <button class="tiny" data-act="up" ${i === 0 ? "disabled" : ""} aria-label="Move up">&uarr;</button>
+          <button class="tiny" data-act="dn" ${i === S.sheet.length - 1 ? "disabled" : ""} aria-label="Move down">&darr;</button>
+          <button class="tiny" data-act="rm" aria-label="Remove">&times;</button>
+        </div>`;
+      div.querySelector('[data-act=up]').onclick = () => { [S.sheet[i-1], S.sheet[i]] = [S.sheet[i], S.sheet[i-1]]; renderSheet(); };
+      div.querySelector('[data-act=dn]').onclick = () => { [S.sheet[i+1], S.sheet[i]] = [S.sheet[i], S.sheet[i+1]]; renderSheet(); };
+      div.querySelector('[data-act=rm]').onclick = () => {
+        S.sheet.splice(i, 1); S.roles.delete(id);
+        renderSheet(); renderLedger(); renderStock();
+      };
+      el.appendChild(div);
+    });
+  }
+  const lim = s.limit;
+  let note = `${S.sheet.length} / ${lim}`;
+  const dang = S.sheet.filter(id => S.globalIngredients && S.globalIngredients.has(id) &&
+    !S.sheet.some(o => o !== id && recipe(o).some(r => String(r.ingredientItem.id) === id))).length;
+  if (dang) note += ` · ${dang} dangling`;
+  if (S.truncated) note += " — targets alone exceed your slots!";
+  $("sheetCount").textContent = note;
+}
+
+function renderZonesOut() {
+  const box = $("zonesOut");
+  if (!S.planZones || S.planZones.length === 0) {
+    box.innerHTML = `<div class="hint">${S.sheet.length ? "No exploring needed — every ingredient is crafted in-plan or stocked." : "Build a plan to see which zones it needs."}</div>`;
+    $("zoneCount").textContent = "";
+    return;
+  }
+  box.innerHTML = "";
+  for (const pz of S.planZones) {
+    const div = document.createElement("div");
+    div.className = "zoneOut";
+    div.innerHTML = `${sprite(pz.zone, "sprite sm")}<span class="zname">${esc(pz.zone.name)}</span>
+      <span class="zwhy">supplies ${pz.needed.length} needed drop${pz.needed.length === 1 ? "" : "s"}</span>`;
+    box.appendChild(div);
+  }
+  $("zoneCount").textContent = String(S.planZones.length);
+  if (S.unattainable && S.unattainable.length) {
+    const warn = document.createElement("div");
+    warn.className = "hint";
+    warn.innerHTML = `<span style="color:var(--red)">No explore zone drops:</span> ` +
+      S.unattainable.map(id => esc((S.items.get(id) || {}).name || id)).join(", ");
+    box.appendChild(warn);
+  }
+}
+
+function renderLedger() {
+  const s = settings();
+  const table = $("ledger");
+  const bar = $("summaryBar");
+  if (!S.planZones || S.planZones.length === 0) { table.innerHTML = ""; bar.innerHTML = `<span>No zones in plan.</span>`; return; }
+
+  // pool across plan zones
+  const pool = new Map(); // id -> {perExplore, zones:[]}
+  for (const pz of S.planZones) {
+    for (const row of dropTableFor(pz.zone, s)) {
+      const id = String(row.item.id);
+      const pe = 1 / row.rate;
+      if (!pool.has(id)) pool.set(id, { item: S.items.get(id) || row.item, perExplore: pe, zones: [pz.zone.name] });
+      else { const p = pool.get(id); p.perExplore = Math.max(p.perExplore, pe); p.zones.push(pz.zone.name); }
+    }
+  }
+  // consumers
+  const consumers = new Map(); // ingId -> [craft names]
+  for (const id of S.sheet) for (const r of recipe(id)) {
+    const ing = String(r.ingredientItem.id);
+    if (!consumers.has(ing)) consumers.set(ing, []);
+    consumers.get(ing).push((S.items.get(id) || {}).name || id);
+  }
+
+  const riskFloor = 1 / s.rareCutoff;
+  const nearCapL = (id) => {
+    const lvl = S.levels[id];
+    return lvl != null && (s.invCap - lvl) <= s.invCap * 0.2;
+  };
+  let covered = 0, riskCount = 0, riskCovered = 0;
+  const rows = [...pool.values()].sort((a, b) => {
+    const risky = (x) => x.perExplore >= riskFloor ? 1 : 0;
+    const eaten = (x) => consumers.has(String(x.item.id)) ? 1 : 0;
+    // at-risk & uneaten first, safe rares last
+    return (eaten(a) - risky(a)) - (eaten(b) - risky(b)) || b.perExplore - a.perExplore;
+  });
+  let html = `<tr><th>Drop</th><th>Frequency</th><th>Consumed by</th></tr>`;
+  for (const p of rows) {
+    const id = String(p.item.id);
+    const eats = consumers.get(id);
+    const risky = p.perExplore >= riskFloor || nearCapL(id);
+    if (eats) covered++;
+    if (risky) { riskCount++; if (eats) riskCovered++; }
+    const chip = eats
+      ? `<span class="chip ok">${esc(eats.slice(0,3).join(", "))}${eats.length>3 ? " +"+(eats.length-3) : ""}</span>`
+      : (risky ? `<span class="chip bad">${nearCapL(id) && p.perExplore < riskFloor ? "near cap — burns" : "unused — burns at cap"}</span>`
+               : `<span class="chip meh">safe — too rare to cap</span>`);
+    html += `<tr>
+      <td class="itemCell">${sprite(p.item, "sprite sm")}${esc(p.item.name)}</td>
+      <td class="mono">${rate1in(p.perExplore)}</td>
+      <td>${chip}</td></tr>`;
+  }
+  table.innerHTML = html;
+  const pct = riskCount ? Math.round((riskCovered / riskCount) * 100) : 100;
+  bar.innerHTML = `<div><b>${pct}%</b> <span>of at-risk drops consumed (${riskCovered}/${riskCount})</span></div>
+    <div><b>${covered}</b> <span>of ${pool.size} total drops eaten</span></div>`;
+}
+
+function renderStock() {
+  const box = $("stockList");
+  if (!S.stock || S.stock.size === 0) {
+    box.innerHTML = `<div class="hint">Nothing — every ingredient is crafted in-plan or found while exploring.</div>`;
+    return;
+  }
+  let html = `<table><tr><th>Item</th><th>Feeds</th></tr>`;
+  for (const v of S.stock.values()) {
+    html += `<tr><td class="itemCell">${sprite(v.item, "sprite sm")}${esc(v.item.name)}</td>
+      <td>${esc([...new Set(v.usedBy)].slice(0, 4).join(", "))}</td></tr>`;
+  }
+  box.innerHTML = html + `</table>
+    <div class="hint">These come from farming, fishing, or the store — keep a supply in inventory. Iron and nails are excluded when Iron Depot is on.</div>`;
+}
+
+// ---------- saved plans ----------
+function renderSaved() {
+  const box = $("savedSets");
+  const names = Object.keys(S.saved);
+  if (names.length === 0) { box.innerHTML = `<div class="hint">Nothing saved yet.</div>`; return; }
+  box.innerHTML = "";
+  for (const name of names) {
+    const v = S.saved[name];
+    const row = document.createElement("div");
+    row.className = "savedRow";
+    row.innerHTML = `<span class="sname">${esc(name)}</span>
+      <span class="smeta">${(v.sheet || []).length} crafts</span>`;
+    const load = document.createElement("button"); load.className = "tiny"; load.textContent = "Load";
+    load.onclick = () => {
+      S.targets = (v.targets || []).filter(id => S.items.has(id));
+      applySettings(v.settings);
+      if (v.sheet && v.sheet.length) {
+        S.sheet = v.sheet.filter(id => S.items.has(id));
+        S.roles = new Map(Object.entries(v.roles || {}));
+        buildPlanZonesFromSheet();
+        renderAll();
+      } else if (S.targets.length) buildPlan();
+    };
+    const del = document.createElement("button"); del.className = "tiny"; del.textContent = "×"; del.ariaLabel = "Delete " + name;
+    del.onclick = () => { delete S.saved[name]; storeSets(); renderSaved(); };
+    row.appendChild(load); row.appendChild(del);
+    box.appendChild(row);
+  }
+}
+// reconstruct zones/stock views for a loaded sheet without re-optimizing
+function buildPlanZonesFromSheet() {
+  const s = settings();
+  const dropIndex = buildDropIndex(s);
+  const inSheet = new Set(S.sheet);
+  const infinite = infiniteIds(s);
+  const need = new Set();
+  const stock = new Map();
+  for (const id of S.sheet) for (const r of recipe(id)) {
+    const ing = String(r.ingredientItem.id);
+    if (inSheet.has(ing) || infinite.has(ing)) continue;
+    if (dropIndex.has(ing)) need.add(ing);
+    else {
+      if (!stock.has(ing)) stock.set(ing, { item: S.items.get(ing) || r.ingredientItem, usedBy: [] });
+      stock.get(ing).usedBy.push((S.items.get(id) || {}).name || id);
+    }
+  }
+  const chosen = [];
+  const uncovered = new Set(need);
+  while (uncovered.size > 0) {
+    let best = null, bestCover = [];
+    for (const z of S.zones) {
+      if (chosen.some(c => c.zone === z)) continue;
+      const cover = [];
+      for (const row of dropTableFor(z, s)) if (uncovered.has(String(row.item.id))) cover.push(String(row.item.id));
+      if (cover.length > bestCover.length) { best = z; bestCover = cover; }
+    }
+    if (!best) break;
+    chosen.push({ zone: best, needed: bestCover });
+    for (const id of bestCover) uncovered.delete(id);
+  }
+  S.planZones = chosen;
+  S.stock = stock;
+  S.unattainable = [...uncovered];
+}
+
+async function storeSets() {
+  try { await store.set(SETS_KEY, JSON.stringify(S.saved)); } catch (e) { /* session-only */ }
+}
+$("saveBtn").onclick = () => {
+  const name = $("saveName").value.trim();
+  if (!name) { $("saveName").focus(); return; }
+  S.saved[name] = {
+    targets: [...S.targets], sheet: [...S.sheet],
+    roles: Object.fromEntries(S.roles), settings: settings(),
+  };
+  $("saveName").value = "";
+  storeSets(); renderSaved();
+};
+$("exportBtn").onclick = () => {
+  const blob = new Blob([JSON.stringify({ saved: S.saved }, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = "craftworks-plans.json"; a.click();
+  URL.revokeObjectURL(a.href);
+};
+$("importBtn").onclick = () => {
+  const inp = document.createElement("input");
+  inp.type = "file"; inp.accept = "application/json";
+  inp.onchange = async () => {
+    try {
+      const data = JSON.parse(await inp.files[0].text());
+      if (data.saved) S.saved = { ...S.saved, ...data.saved };
+      storeSets(); renderSaved();
+    } catch (e) { alert("Couldn't read that file: " + e.message); }
+  };
+  inp.click();
+};
+
+// ---------- wire up ----------
+$("buildBtn").onclick = buildPlan;
+for (const id of ["limit", "maxLevel", "ironDepot", "runecube", "rareCutoff", "invCap"]) {
+  $(id).addEventListener("change", replan);
+}
+for (const id of ["sessionMin", "clicksPerSec", "switchSec"]) {
+  $(id).addEventListener("change", () => { computePath(); renderPath(); });
+}
+wireLevelsPanel();
+(async () => {
+  try {
+    const r = await store.get(LEVELS_KEY);
+    if (r && r.value) S.levels = JSON.parse(r.value);
+  } catch (e) { /* none */ }
+})();
+boot();
+</script>
+</body>
+</html>
